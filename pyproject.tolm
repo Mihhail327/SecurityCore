@@ -1,0 +1,29 @@
+[project]
+name = "securitycore"
+version = "0.1.0"
+description = "Модульная библиотека для анализа, защиты и валидации данных"
+authors = [
+    { name = "Mihhail327", email = "mixa-amr@hotmail.com" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "cryptography>=41.0.0",
+    "pytest>=7.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/xIkkIx/SecurityCore"
+Repository = "https://github.com/xIkkIx/SecurityCore"
+Issues = "https://github.com/xIkkIx/SecurityCore/issues"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
