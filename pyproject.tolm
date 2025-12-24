@@ -15,9 +15,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/xIkkIx/SecurityCore"
-Repository = "https://github.com/xIkkIx/SecurityCore"
-Issues = "https://github.com/xIkkIx/SecurityCore/issues"
+Homepage = "https://github.com/Mihhail327/SecurityCore"
+Repository = "https://github.com/Mihhail327/SecurityCore"
+Issues = "https://github.com/Mihhail327/SecurityCore/issues"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
