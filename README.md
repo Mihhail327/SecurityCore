@@ -25,7 +25,7 @@ pip install securitycore
 *(или клонируй репозиторий и установи локально)*
 
 ```bash
-git clone https://github.com/mihhail327/SecurityCore.git
+git clone https://github.com/Mihhail327/SecurityCore.git
 cd SecurityCore
 pip install -r requirements.txt
 ```
