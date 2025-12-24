@@ -48,7 +48,7 @@ pytest -v
 ```python
 from securitycore.crypto import crypto_utils
 from securitycore.protection import input_sanitizer
-from securitycore.validation import validators
+from securitycore.utils import validators
 
 # Хэширование
 print(crypto_utils.hash_sha256("mypassword"))
