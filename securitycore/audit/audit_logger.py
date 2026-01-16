@@ -1,62 +1,70 @@
 import logging
 from datetime import datetime
-from pathlib import Path
+from typing import Any, Dict, Optional
 
-# Папка для логов
-LOG_DIR = Path("logs")
-LOG_DIR.mkdir(exist_ok=True)
-
-# Основной файл логов
-LOG_FILE = LOG_DIR / "security_audit.log"
-
-# Настройка логирования
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
+from securitycore._internal.constants import (
+    AUDIT_TIMESTAMP_FORMAT,
+    AUDIT_DEFAULT_CHANNEL,
+    MAX_LOG_MESSAGE_LENGTH,
 )
+from securitycore._internal.error import AuditError
+from securitycore.utils.helpers import safe_str
 
-def log_event(event: str, level: str = "info"):
-    """Логирует события безопасности.
-    :param event: описание события
-    :param level: уровень ('info', 'warning', 'error', 'critical')
-    """
-    if level == "info":
-        logging.info(event)
-    elif level == "warning":
-        logging.warning(event)
-    elif level == "error":
-        logging.error(event)
-    elif level == "critical":
-        logging.critical(event)
-    else:
-        logging.debug(event)
 
-def log_access(user: str, action: str, resource: str):
-    """
-    Логирует доступ пользователя к ресурсу.
-    """
-    event = f"ACCESS: user={user}, action={action}, resource={resource}"
-    log_event(event, level="info")
+# Инициализация логгера
+_logger = logging.getLogger(AUDIT_DEFAULT_CHANNEL)
+_logger.setLevel(logging.INFO)
 
-def log_violation(user: str, violation: str):
-    """
-    Логирует нарушение безопасности.
-    """
-    event = f"VIOLATION: user={user}, violation={violation}"
-    log_event(event, level="warning")
+# Добавляем обработчик, если его нет
+if not _logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter("%(message)s")
+    handler.setFormatter(formatter)
+    _logger.addHandler(handler)
 
-def log_system_error(error: str):
-    """
-    Логирует системную ошибку.
-    """
-    event = f"SYSTEM ERROR: {error}"
-    log_event(event, level="error")
 
-def log_critical_alert(alert: str):
+# Форматирование записи аудита
+def _format_audit_record(event: str, details: Optional[Dict[str, Any]] = None) -> str:
     """
-    Логирует критическое событие.
+    Формирует строку аудита в стандартизированном формате.
+    Формат:
+        YYYY-MM-DD HH:MM:SS | event | key=value, key=value
     """
-    event = f"CRITICAL ALERT: {alert}"
-    log_event(event, level="critical")
+    timestamp = datetime.utcnow().strftime(AUDIT_TIMESTAMP_FORMAT)
+
+    if details is None:
+        return f"{timestamp} | {event}"
+
+    if not isinstance(details, dict):
+        raise AuditError("Поле 'details' должно быть словарём")
+
+    try:
+        details_str = ", ".join(
+            f"{safe_str(k)}={safe_str(v)}" for k, v in details.items()
+        )
+    except Exception as exc:
+        raise AuditError(f"Ошибка форматирования деталей аудита: {exc}")
+
+    return f"{timestamp} | {event} | {details_str}"
+
+
+# Основная функция аудита
+def audit(event: str, details: Optional[Dict[str, Any]] = None) -> None:
+    """
+    Записывает событие аудита в лог.
+
+    Пример:
+        audit("user_login", {"user_id": 42})
+    """
+    if not isinstance(event, str) or not event.strip():
+        raise AuditError("Событие аудита должно быть непустой строкой")
+
+    record = _format_audit_record(event, details)
+
+    if len(record) > MAX_LOG_MESSAGE_LENGTH:
+        raise AuditError("Запись аудита превышает максимальный размер")
+
+    try:
+        _logger.info(record)
+    except Exception as exc:
+        raise AuditError(f"Ошибка записи аудита: {exc}")

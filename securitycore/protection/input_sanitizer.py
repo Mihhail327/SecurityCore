@@ -1,74 +1,89 @@
-import re
 import html
+import re
 
-# Базовые проверки
+from securitycore._internal.error import ValidationError
+from securitycore.utils.patterns import (
+    EMAIL_PATTERN,
+    URL_PATTERN,
+)
 
-def strip_whitespace(text: str) -> str:
+
+# Общий санитайзер строки
+def sanitize_string(value: str) -> str:
     """
-    Убирает лишние пробелы в начале и конце строки.
+    Очищает строку от управляющих символов и лишних пробелов.
+    Не изменяет смысл, только нормализует.
     """
-    return text.strip()
+    if not isinstance(value, str):
+        raise ValidationError("Ожидалась строка")
 
-def remove_control_chars(text: str) -> str:
+    cleaned = value.strip()
+    cleaned = cleaned.replace("\x00", "")  # null-byte protection
+    return cleaned
+
+
+# Санитайзер email
+def sanitize_email(value: str) -> str:
     """
-    Удаляет управляющие символы (например, \n, \r, \t).
-    """
-    return re.sub(r'[\x00-\x1f\x7f]', '', text)
-
-# Защита от XSS
-
-def escape_html(text: str) -> str:
-    """
-    Экранирует HTML-символы, чтобы предотвратить XSS
-    """
-    return html.escape(text)
-
-# Защита от SQL-инъекций
-
-SQL_PATTERNS = [
-    r"(?i)\bSELECT\b",
-    r"(?i)\bINSERT\b",
-    r"(?i)\bUPDATE\b",
-    r"(?i)\bDELETE\b",
-    r"(?i)\bDROP\b",
-    r"(?i)\bUNION\b",
-    r"(?i)\bEXEC\b",
-    r"(?i)\bALTER\b",
-    r"(?i)\bTRUNCATE\b",
-    r"(?i)\bCREATE\b",
-    r"--", # комментарий SQL
-
-    r";" # множественные запросы
-]
-
-def detect_sql_injection(text: str) -> list[str]:
-    """
-    Проверяет, содержит ли строка подозрительные SQL-паттерны
-    """
-    return [pattern for pattern in SQL_PATTERNS if re.search(pattern, text)]
-
-# Универсальная очистка
-
-def sanitize_input(text: str) -> dict:
-    """
-    Полная очистка ввода:
+    Нормализует email:
     - убирает пробелы
-    - удаляет управляющие символы
-    - экранирует HTML
-    - проверяет SQL-инъекции
-    Возвращает словарь с результатом.
+    - приводит к нижнему регистру
+    - проверяет по лёгкому EMAIL_PATTERN
     """
-    cleaned = strip_whitespace(text)
-    cleaned = remove_control_chars(cleaned)
-    safe_html = escape_html(cleaned)
+    value = sanitize_string(value).lower()
 
-    sql_flag = detect_sql_injection(cleaned)
+    if not EMAIL_PATTERN.match(value):
+        raise ValidationError("Некорректный email")
 
-    is_safe = len(sql_flag) == 0
+    return value
 
-    return {
-        "original": text,
-        "cleaned": safe_html,
-        "sql_injection_detected": sql_flag,
-        "is_safe": is_safe
-    }
+
+# Санитайзер URL
+def sanitize_url(value: str) -> str:
+    """
+    Нормализует URL:
+    - убирает пробелы
+    - HTML-экранирует
+    - проверяет по лёгкому URL_PATTERN
+    """
+    value = sanitize_string(value)
+    value = html.escape(value, quote=True)
+
+    if not URL_PATTERN.match(value):
+        raise ValidationError("Некорректный URL")
+
+    return value
+
+
+# Санитайзер для безопасного текста (XSS-safe)
+def sanitize_text(value: str) -> str:
+    """
+    Экранирует HTML, удаляет опасные символы.
+    Подходит для отображения пользовательского ввода.
+    """
+    if not isinstance(value, str):
+        raise ValidationError("Ожидалась строка")
+
+    value = value.replace("\x00", "")
+    return html.escape(value, quote=True)
+
+
+# Санитайзер для чисел
+def sanitize_int(value) -> int:
+    """
+    Преобразует значение в int.
+    """
+    try:
+        return int(value)
+    except Exception:
+        raise ValidationError("Некорректное целое число")
+
+
+def sanitize_float(value) -> float:
+    """
+    Преобразует значение в float.
+    """
+    try:
+        return float(value)
+    except Exception:
+        raise ValidationError("Некорректное число с плавающей точкой")

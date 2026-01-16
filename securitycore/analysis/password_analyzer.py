@@ -1,75 +1,64 @@
-import string
+from securitycore._internal.regexes import ADVANCED_PASSWORD_REGEX
+from securitycore._internal.constants import (
+    SPECIAL_CHARS,
+    MIN_PASSWORD_LENGTH
+)
+from securitycore.analysis.entropy import calculate_entropy, estimate_charset_size
 
-SPECIAL = "!@#$%^&*()-_=+[]{};:,.<>?/\\|"
 
+# Основной анализ пароля
 def analyze_password(password: str) -> dict:
     """
-    Анализирует пароль и возвращает результат:
-    - strength: уровень сложности (weak, medium, strong)
-    -valid: True/False
-    -feedback: список рекомендаций
+    Возвращает подробный анализ пароля:
+    - entropy: float
+    - charset_size: int
+    - length: int
+    - strength: weak/medium/strong/very_strong
+    - valid_strict: соответствует ли строгому regex
+    - recommendations: list[str]
     """
-    feedback = []
-    score = 0
+    password = password or ""
+    length = len(password)
 
-    # Проверка длины
+    entropy = calculate_entropy(password)
+    charset_size = estimate_charset_size(password)
 
-    if len(password) >= 12:
-        score += 2
-    elif len(password) >=8:
-        score += 1
-    else:
-        feedback.append("Пароль слишком короткий (<8 символов)")
+    valid_strict = bool(ADVANCED_PASSWORD_REGEX.match(password))
 
-    # Проверка цифр
+    recommendations = []
 
-    if any(c.isdigit() for c in password):
-        score += 1
-    else:
-        feedback.append("Добавьте хотя бы одну цифру")
+    # Длина
+    if length < MIN_PASSWORD_LENGTH:
+        recommendations.append(f"Увеличьте длину до {MIN_PASSWORD_LENGTH} символов")
+    elif length < 12:
+        recommendations.append("Рекомендуется длина 12+ символов")
 
-    # Проверка заглавных букв
+    # Классы символов
+    if not any(ch.islower() for ch in password):
+        recommendations.append("Добавьте строчные буквы")
+    if not any(ch.isupper() for ch in password):
+        recommendations.append("Добавьте заглавные буквы")
+    if not any(ch.isdigit() for ch in password):
+        recommendations.append("Добавьте цифры")
+    if not any(ch in SPECIAL_CHARS for ch in password):
+        recommendations.append("Добавьте специальные символы")
 
-    if any(c.isupper() for c in password):
-        score += 1
-    else:
-        feedback.append("Добавьте заглавную букву")
-
-    # Проверка строчных букв
-
-    if any(c.islower() for c in password):
-        score += 1
-    else:
-        feedback.append("Добавьте строчную букву")
-
-    # Проверка спецсимволов
-
-    if any(c in SPECIAL for c in password):
-        score += 1
-    else:
-        feedback.append("Добавьте спецсимвол")
-
-    # Проверка пробелов
-
-    if " " in password:
-        feedback.append("Не используйте пробелы в пароле")
-
-    # Проверка запрещённых символов (например, кириллица)
-
-    if any(c not in string.printable for c in password):
-        feedback.append("Используйте только латинские буквы и стандартные символы")
-
-    # Определение уровня сложности
-
-    if score >= 5:
-        strength = "strong"
-    elif score >=3:
-        strength = "medium"
-    else:
+    # Оценка силы
+    if entropy < 28:
         strength = "weak"
+    elif entropy < 36:
+        strength = "medium"
+    elif entropy < 60:
+        strength = "strong"
+    else:
+        strength = "very_strong"
 
     return {
+        "password": password,
+        "length": length,
+        "entropy": entropy,
+        "charset_size": charset_size,
         "strength": strength,
-        "valid": strength == "strong",
-        "feedback": feedback
+        "valid_strict": valid_strict,
+        "recommendations": recommendations,
     }

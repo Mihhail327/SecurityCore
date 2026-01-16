@@ -1,54 +1,110 @@
-import  hashlib
+import hashlib
+import hmac
 import secrets
-import base64
-from cryptography.fernet import Fernet
 
-# Хэширование
+from securitycore._internal.constants import (
+    DEFAULT_SALT_LENGTH,
+    DEFAULT_ENCODING,
+    HASH_ITERATIONS,
+    HASH_ALGORITHM,
+    DEFAULT_TOKEN_LENGTH,
+)
+from securitycore._internal.error import CryptoError
 
-def hash_sha256(data: str) -> str:
-    """
-    Возвращает SHA-256 хэш строки.
-    """
-    return hashlib.sha256(data.encode()).hexdigest()
 
-def hash_md5(data: str) -> str:
+# Генерация криптографически стойкой соли
+def generate_salt(length: int = DEFAULT_SALT_LENGTH) -> bytes:
     """
-    Возвращает MD5 хэш строки ( не рекомендуется для безопасности, но полезно для проверки целостности).
+    Возвращает криптографически стойкую соль.
     """
-    return hashlib.md5(data.encode()).hexdigest()
+    if not isinstance(length, int) or length <= 0:
+        raise CryptoError("Длина соли должна быть положительным числом")
 
-# Генерация ключей и токенов
+    try:
+        return secrets.token_bytes(length)
+    except Exception as exc:
+        raise CryptoError(f"Ошибка генерации соли: {exc}")
 
-def generate_secret_key(length: int = 32) -> str:
-    """
-    Генерирует случайный секретный ключ в hex-формате.
-    """
-    return secrets.token_hex(length)
 
-def generate_token(length: int = 16) -> str:
+# Хэширование данных PBKDF2-HMAC
+def hash_data(data: str, salt: bytes | None = None) -> tuple[bytes, bytes]:
     """
-    Генерирует случайный токен (base64)
+    Хэширует строку с использованием PBKDF2-HMAC.
+    Возвращает (salt, hash).
     """
-    return base64.urlsafe_b64encode(secrets.token_bytes(length)).decode()
+    if not isinstance(data, str):
+        raise CryptoError("Данные для хэширования должны быть строкой")
 
-# Симитричное шифрование (Fernet)
+    salt = salt or generate_salt()
 
-def generate_fernet_key() -> bytes:
-    """
-    Генерирует ключ для Fernet.
-    """
-    return Fernet.generate_key()
+    try:
+        hashed = hashlib.pbkdf2_hmac(
+            HASH_ALGORITHM,
+            data.encode(DEFAULT_ENCODING),
+            salt,
+            HASH_ITERATIONS,
+        )
+        return salt, hashed
+    except Exception as exc:
+        raise CryptoError(f"Ошибка хэширования данных: {exc}")
 
-def encrypt_message(message: str, key: bytes) -> str:
-    """
-    Шифрует сообщение с использованием Fernet.
-    """
-    f = Fernet(key)
-    return f.encrypt(message.encode()).decode()
 
-def decrypt_message(token: str, key: bytes) -> str:
+# Проверка соответствия данных и хэша
+def verify_hash(data: str, salt: bytes, expected_hash: bytes) -> bool:
     """
-    Дешифрует сообщение с использованием Fernet.
+    Проверяет, соответствует ли строка ранее вычисленному хэшу.
     """
-    f = Fernet(key)
-    return f.decrypt(token.encode()).decode()
+    if not isinstance(data, str):
+        return False
+
+    try:
+        _, new_hash = hash_data(data, salt)
+        return hmac.compare_digest(new_hash, expected_hash)
+    except Exception:
+        return False
+
+
+# Генерация безопасного токена
+def generate_token(length: int = DEFAULT_TOKEN_LENGTH) -> str:
+    """
+    Возвращает криптографически стойкий токен в hex-формате.
+    """
+    if not isinstance(length, int) or length <= 0:
+        raise CryptoError("Длина токена должна быть положительной")
+
+    try:
+        return secrets.token_hex(length)
+    except Exception as exc:
+        raise CryptoError(f"Ошибка генерации токена: {exc}")
+
+
+# Подпись данных HMAC
+def sign_data(data: str, key: bytes) -> bytes:
+    """
+    Создаёт HMAC-подпись данных.
+    """
+    if not isinstance(data, str):
+        raise CryptoError("Данные для подписи должны быть строкой")
+
+    if not isinstance(key, (bytes, bytearray)):
+        raise CryptoError("Ключ для подписи должен быть байтовым")
+
+    try:
+        return hmac.new(key, data.encode(DEFAULT_ENCODING), HASH_ALGORITHM).digest()
+    except Exception as exc:
+        raise CryptoError(f"Ошибка подписи данных: {exc}")
+
+
+# Проверка подписи
+def verify_signature(data: str, key: bytes, signature: bytes) -> bool:
+    """
+    Проверяет корректность HMAC-подписи.
+    """
+    if not isinstance(signature, (bytes, bytearray)):
+        return False
+
+    try:
+        expected = sign_data(data, key)
+        return hmac.compare_digest(expected, signature)
+    except Exception:
+        return False
