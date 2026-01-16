@@ -27,6 +27,7 @@ from .validators.password_validator import validate_password
 from .protection.xss import sanitize_xss, ensure_no_xss
 from .protection.sql import sanitize_sql_input, ensure_no_sql_injection
 from .protection.path_safety import ensure_safe_path, ensure_safe_filename
+from .protection.input_sanitizer import input_sanitizer
 
 from .audit.audit_logger import audit
 from .audit.json_logger import audit_json
@@ -49,6 +50,7 @@ __all__ = [
     "sanitize_xss", "ensure_no_xss",
     "sanitize_sql_input", "ensure_no_sql_injection",
     "ensure_safe_path", "ensure_safe_filename",
+    "input_sanitizer",
 
     # audit
     "audit", "audit_json",

@@ -16,6 +16,5 @@ securitycore/crypto/crypto_utils.py
 securitycore/protection/__init__.py
 securitycore/protection/input_sanitizer.py
 securitycore/utils/__init__.py
-securitycore/utils/validators.py
 tests/test_crypto.py
 tests/test_password.py
