@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "securitycore"
-version = "1.0.1"
+version = "1.0.2"
 description = "Модульная библиотека для анализа, защиты и валидации данных"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -43,8 +43,11 @@ Repository = "https://github.com/Mihhail327/SecurityCore"
 Issues = "https://github.com/Mihhail327/SecurityCore/issues"
 
 [tool.setuptools]
-packages = ["securitycore"]
 include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["securitycore*"]
 
 [tool.setuptools.package-data]
 securitycore = ["py.typed"]

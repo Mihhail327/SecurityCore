@@ -82,14 +82,14 @@ INVALID_FILENAME_PATTERN = re.compile(
 # SQL injection detection
 SQL_INJECTION_PATTERN = re.compile(
     r"""
-    (--|#|/\*|\*/|;)                     # комментарии и разделители
-    |'                                   # одиночная кавычка
-    |(\bOR\b|\bAND\b)\s+\d+=\d+          # логические выражения
-    |\bUNION\b\s+\bSELECT\b              # UNION SELECT
-    |\bDROP\b\s+\bTABLE\b                # DROP TABLE
-    |\bINSERT\b\s+\bINTO\b               # INSERT INTO
-    |\bUPDATE\b\s+\bSET\b                # UPDATE SET
-    |\bDELETE\b\s+\bFROM\b               # DELETE FROM
+    (--|\#|/\*|\*/|;)                     # комментарии и разделители
+    |'                                    # одиночная кавычка
+    |(\bOR\b|\bAND\b)\s+\d+=\d+           # логические выражения
+    |\bUNION\b\s+\bSELECT\b               # UNION SELECT
+    |\bDROP\b\s+\bTABLE\b                 # DROP TABLE
+    |\bINSERT\b\s+\bINTO\b                # INSERT INTO
+    |\bUPDATE\b\s+\bSET\b                 # UPDATE SET
+    |\bDELETE\b\s+\bFROM\b                # DELETE FROM
     """,
     re.IGNORECASE | re.VERBOSE
 )
