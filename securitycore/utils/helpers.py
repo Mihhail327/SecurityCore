@@ -1,11 +1,13 @@
-import time
 import uuid
-from typing import Any, Iterable, List
+from itertools import chain, islice
+from datetime import datetime, timezone
+from typing import Any, Iterable, List, Generator
 
 
 def utc_timestamp() -> int:
-    """Возвращает текущий Unix timestamp в UTC."""
-    return int(time.time())
+    """Возвращает текущий Unix timestamp (UTC)."""
+    # Python 3.13 standard way
+    return int(datetime.now(timezone.utc).timestamp())
 
 
 def short_uuid() -> str:
@@ -13,48 +15,51 @@ def short_uuid() -> str:
     return uuid.uuid4().hex[:8]
 
 
-def chunk_list(items: Iterable[Any], size: int) -> List[List[Any]]:
-    """Разбивает последовательность на чанки фиксированного размера."""
+def chunk_list(items: Iterable[Any], size: int) -> Generator[List[Any], None, None]:
+    """
+    Разбивает последовательность на чанки (генератор).
+    Экономно расходует память.
+    """
     if size <= 0:
-        raise ValueError("Chunk size must be positive")
+        raise ValueError("Размер чанка должен быть положительным")
 
-    chunk = []
-    result = []
-
-    for item in items:
-        chunk.append(item)
-        if len(chunk) == size:
-            result.append(chunk)
-            chunk = []
-
-    if chunk:
-        result.append(chunk)
-
-    return result
+    it = iter(items)
+    while True:
+        chunk = list(islice(it, size))
+        if not chunk:
+            break
+        yield chunk
 
 
 def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
-    """Преобразует список списков в один плоский список."""
-    return [item for group in nested if group for item in group]
+    """Преобразует вложенные списки в один плоский."""
+    # Используем высокопроизводительный itertools.chain
+    return list(chain.from_iterable(nested))
 
 
-def safe_str(value: Any) -> str:
-    """Безопасно преобразует значение в строку."""
+def safe_str(value: Any, max_len: int = 1000) -> str:
+    """
+    Безопасно преобразует значение в строку с обрезкой.
+    Защищает логи от переполнения.
+    """
     try:
-        return str(value)
-    except BaseException:
+        s = str(value).replace("\x00", "")
+        return (s[:max_len] + "...") if len(s) > max_len else s
+    except Exception:
         return "<unrepresentable>"
 
 
 def is_empty(value: Any) -> bool:
-    """Проверяет, является ли значение пустым."""
+    """Проверяет, является ли значение пустым (None, пустая строка/коллекция)."""
     if value is None:
         return True
 
-    if isinstance(value, str) and value.strip() == "":
-        return True
+    # Строки с пробелами тоже считаем пустыми
+    if isinstance(value, str):
+        return not value.strip()
 
-    if isinstance(value, (list, dict, tuple, set, bytes, bytearray)) and len(value) == 0:
-        return True
-
-    return False
+    # Проверка коллекций
+    try:
+        return len(value) == 0
+    except (TypeError, AttributeError):
+        return False

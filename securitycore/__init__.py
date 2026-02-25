@@ -3,7 +3,7 @@
 from .crypto.crypto_utils import (
     hash_data,
     verify_hash,
-    generate_token,
+    generate_token as generate_raw_token,
     sign_data,
     verify_signature,
 )
@@ -37,24 +37,40 @@ from .analysis import entropy, total_entropy, estimate_charset_size
 
 __all__ = [
     # crypto
-    "hash_data", "verify_hash",
-    "generate_bytes_key", "generate_hex_key", "generate_hmac_key",
+    "hash_data",
+    "verify_hash",
+    "generate_raw_token",
+    "generate_bytes_key",
+    "generate_hex_key",
+    "generate_hmac_key",
     "derive_key_from_password",
-    "generate_token", "verify_token", "create_token_pair",
-    "sign_data", "verify_signature",
+    "generate_token",
+    "verify_token",
+    "create_token_pair",
+    "sign_data",
+    "verify_signature",
 
     # validators
-    "validate_email", "validate_url", "validate_ip", "validate_password",
+    "validate_email",
+    "validate_url",
+    "validate_ip",
+    "validate_password",
 
     # protection
-    "sanitize_xss", "ensure_no_xss",
-    "sanitize_sql_input", "ensure_no_sql_injection",
-    "ensure_safe_path", "ensure_safe_filename",
+    "sanitize_xss",
+    "ensure_no_xss",
+    "sanitize_sql_input",
+    "ensure_no_sql_injection",
+    "ensure_safe_path",
+    "ensure_safe_filename",
     "input_sanitizer",
 
     # audit
-    "audit", "audit_json",
+    "audit",
+    "audit_json",
 
     # analysis
-    "entropy", "total_entropy", "estimate_charset_size",
+    "entropy",
+    "total_entropy",
+    "estimate_charset_size",
 ]

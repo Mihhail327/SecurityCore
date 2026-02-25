@@ -4,64 +4,47 @@ from securitycore._internal.constants import (
     MAX_PASSWORD_LENGTH,
 )
 from securitycore._internal.regexes import ADVANCED_PASSWORD_REGEX
-from securitycore.utils.patterns import PASSWORD_PATTERN
 
 
-# Лёгкая проверка пароля
-def is_password(value: str) -> bool:
+def is_password_secure(value: str) -> bool:
     """
-    Быстрая проверка пароля:
-    - минимальная длина
-    - буквы + цифры
-    - базовые спецсимволы
-    Использует PASSWORD_PATTERN из utils.patterns.
+    Булева проверка: соответствует ли пароль всем строгим требованиям.
     """
     if not isinstance(value, str):
         return False
 
-    value = value.strip()
-
-    if len(value) < MIN_PASSWORD_LENGTH or len(value) > MAX_PASSWORD_LENGTH:
+    # Проверяем длину без модификации строки
+    length = len(value)
+    if length < MIN_PASSWORD_LENGTH or length > MAX_PASSWORD_LENGTH:
         return False
 
-    return PASSWORD_PATTERN.match(value) is not None
+    return bool(ADVANCED_PASSWORD_REGEX.match(value))
 
 
-# Строгая проверка пароля
 def validate_password(value: str) -> str:
     """
-    Строгая проверка пароля:
-    - длина
-    - классы символов
-    - спецсимволы
-    - отсутствие пробелов
-    Использует ADVANCED_PASSWORD_REGEX.
+    Строгая валидация пароля с информативными ошибками.
     """
     if not isinstance(value, str):
         raise ValidationError("Пароль должен быть строкой")
 
-    value = value.strip()
+    length = len(value)
+    if length < MIN_PASSWORD_LENGTH:
+        raise ValidationError(f"Пароль слишком короткий (минимум {MIN_PASSWORD_LENGTH} симв.)")
 
-    if len(value) < MIN_PASSWORD_LENGTH:
-        raise ValidationError("Пароль слишком короткий")
-
-    if len(value) > MAX_PASSWORD_LENGTH:
-        raise ValidationError("Пароль слишком длинный")
+    if length > MAX_PASSWORD_LENGTH:
+        raise ValidationError(f"Пароль слишком длинный (максимум {MAX_PASSWORD_LENGTH} симв.)")
 
     if not ADVANCED_PASSWORD_REGEX.match(value):
-        raise ValidationError("Пароль не соответствует требованиям безопасности")
+        # Здесь можно расширить описание: "нужны цифры, заглавные буквы и т.д."
+        raise ValidationError(
+            "Пароль не соответствует требованиям сложности (нужны буквы в разных регистрах, цифры и спецсимволы)")
 
     return value
 
 
-# Универсальная проверка
 def ensure_password(value: str) -> str:
     """
-    Универсальная проверка:
-    - сначала лёгкая проверка (PASSWORD_PATTERN)
-    - затем строгая проверка (ADVANCED_PASSWORD_REGEX)
+    Алиас для основной валидации.
     """
-    if not is_password(value):
-        raise ValidationError("Пароль не соответствует базовым требованиям")
-
     return validate_password(value)

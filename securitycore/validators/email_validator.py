@@ -1,5 +1,3 @@
-import re
-
 from securitycore._internal.error import ValidationError
 from securitycore._internal.constants import MAX_EMAIL_LENGTH
 from securitycore._internal.regexes import RFC5322_EMAIL_REGEX

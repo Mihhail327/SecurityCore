@@ -3,151 +3,100 @@
 
 # 🔐 SecurityCore
 
-**SecurityCore** — модульная библиотека Python для анализа, защиты, валидации и безопасной обработки данных.  
-Каждый модуль — это самостоятельный «артефакт безопасности», который можно использовать в веб‑приложениях, API‑сервисах, CLI‑утилитах и инфраструктурных системах.
+<p align="center">
+<img src="[https://img.shields.io/badge/Python-3.13+-blue?style=for-the-badge&logo=python&logoColor=white](https://img.shields.io/badge/Python-3.13+-blue?style=for-the-badge&logo=python&logoColor=white)" alt="Python Version">
+<img src="[https://img.shields.io/badge/Poetry-Project-6366f1?style=for-the-badge&logo=poetry&logoColor=white](https://img.shields.io/badge/Poetry-Project-6366f1?style=for-the-badge&logo=poetry&logoColor=white)" alt="Poetry">
+<img src="[https://img.shields.io/badge/License-MIT-green?style=for-the-badge](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)" alt="License">
+</p>
 
-Библиотека построена по принципам:
-
-- строгой валидации  
-- безопасных дефолтов  
-- отсутствия циклических зависимостей  
-- чистой архитектуры  
-- предсказуемого API  
+**SecurityCore** — это швейцарский нож для обеспечения безопасности ваших данных. Объединил продвинутый анализ энтропии, многоуровневую защиту от инъекций и строгую валидацию в один лаконичный SDK.
 
 ---
 
-## ✨ Возможности
+## 🛠 Ключевые возможности
 
-### 🔑 Криптография
-- PBKDF2‑HMAC хеширование (`hash_data`, `verify_hash`)
-- генерация криптографических ключей (`generate_bytes_key`, `generate_hex_key`, `generate_hmac_key`)
-- подпись и проверка данных (`sign_data`, `verify_signature`)
-- токены с подписью (`generate_token`, `verify_token`, `create_token_pair`)
-- анализ энтропии (`entropy`, `total_entropy`, `estimate_charset_size`)
-
-### 🛡️ Защита
-- защита от XSS (`sanitize_xss`, `ensure_no_xss`)
-- защита от SQL‑инъекций (`sanitize_sql_input`, `ensure_no_sql_injection`)
-- безопасная работа с путями (`ensure_safe_path`, `ensure_safe_filename`)
-
-### ✔️ Валидация
-- email  
-- URL  
-- IPv4 / IPv6  
-- пароли  
-- строки, длины, форматы  
-
-### 📜 Аудит
-- текстовый аудит (`audit`)
-- JSON‑аудит (`audit_json`)
-- безопасная сериализация и структурированные записи
+| Модуль | Описание | Основные функции |
+| --- | --- | --- |
+| **🔑 Crypto** | Продвинутая криптография и анализ | `analyze_password`, `hash_data`, `generate_token` |
+| **🛡️ Protection** | Защита от классических атак (OWASP) | `sanitize_xss`, `sanitize_sql_input`, `ensure_safe_path` |
+| **✔️ Validation** | Строгая проверка типов и форматов | `validate_email`, `validate_ip`, `validate_url` |
+| **📜 Audit** | Протоколирование для SIEM | `audit`, `audit_json` |
 
 ---
 
-## 📦 Установка
+## 🚀 Быстрый старт
+
+### 1. Установка
 
 ```bash
+# Установка через pip
 pip install securitycore
+
+# Для разработки и контрибьютинга
+git clone https://github.com/Mihhail327/SecurityCore.git
+cd SecurityCore && poetry install
+
 ```
 
-Или локально:
+---
+
+### 2. Примеры использования
+
+#### 🧠 Анализ сложности (Энтропия)
+
+> Не просто считает длину, а вычисляет реальную стойкость к брутфорсу.
+
+```python
+from securitycore import analyze_password
+
+res = analyze_password("SuperSecret123!")
+print(f"📊 Стойкость: {res['strength']} ({res['bits']:.2f} bits)")
+
+```
+
+#### 🧼 Очистка ввода (XSS/SQLi)
+
+```python
+from securitycore import input_sanitizer
+
+raw_html = "<img src=x onerror=alert(1)> Привет!"
+clean_html = input_sanitizer(raw_html)
+# Результат: &lt;img src=x onerror=alert(1)&gt; Привет!
+
+```
+
+#### 🌐 Валидация сетевых данных
+
+```python
+from securitycore import validate_ip
+
+ip = validate_ip("2001:db8::1") # Поддержка IPv6 из коробки
+
+```
+
+---
+
+## 🧪 Надежность и Тестирование
+
+Придерживаюсь подхода **Test-Driven Development**. Стабильность гарантирована полным покрытием `pytest`.
 
 ```bash
-git clone https://github.com/mihhail327/SecurityCore.git
-cd SecurityCore
-pip install -r requirements.txt
+poetry run pytest -v
+
 ```
 
 ---
 
-## 📁 Структура библиотеки
+## 👨‍💻 Об авторе
 
-```
-securitycore/
-    crypto/
-    protection/
-    validators/
-    analysis/
-    audit/
-    utils/
-    _internal/
-```
+Проект поддерживается **Mihhail327**.
 
----
-
-## 📊 Примеры использования
-
-### Хеширование
-
-```python
-from securitycore import hash_data, verify_hash
-
-salt, hashed = hash_data("mypassword")
-print(verify_hash("mypassword", salt, hashed))
-```
-
-### Токены
-
-```python
-from securitycore import generate_token, verify_token, generate_hmac_key
-
-key = generate_hmac_key()
-token = generate_token({"user_id": 42}, key)
-
-print(verify_token(token, key))
-```
-
-### Защита от XSS
-
-```python
-from securitycore import sanitize_xss
-
-print(sanitize_xss("<script>alert('XSS')</script>"))
-```
-
-### Валидация email
-
-```python
-from securitycore import validate_email
-
-validate_email("user@example.com")
-```
-
-### Аудит
-
-```python
-from securitycore import audit
-
-audit("user_login", {"user": "alice"})
-```
-
-### Энтропия
-
-```python
-from securitycore import entropy, total_entropy
-
-print(entropy("MyP@ssw0rd"))
-```
-
----
-
-## 🧪 Тестирование
-
-```bash
-pytest -v
-```
+Библиотека **SecurityCore** выросла из личного интереса к теме информационной безопасности и стремления создавать инструменты, которые делают код чище и защищеннее.
 
 ---
 
 ## 📜 Лицензия
 
-MIT License — см. файл `LICENSE`.
-
----
-
-## 🛡️ Автор
-
-Разработано **Mihhail327**.  
-SecurityCore вырос из простого интереса к безопасности и желания разобраться в теме на практике.
+Распространяется под лицензией **MIT**. Подробности в файле `LICENSE`.
 
 ---

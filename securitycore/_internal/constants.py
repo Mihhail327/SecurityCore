@@ -1,72 +1,51 @@
-# Общие настройки
-DEFAULT_ENCODING = "utf-8"
-DEFAULT_SALT_LENGTH = 16
-DEFAULT_TOKEN_LENGTH = 32
+from typing import Final
 
+# Общие настройки
+DEFAULT_ENCODING: Final[str] = "utf-8"
+DEFAULT_SALT_LENGTH: Final[int] = 16  # Длина соли для PBKDF2
+DEFAULT_TOKEN_LENGTH: Final[int] = 32  # Длина токенов и ключ
 
 # Лимиты и параметры паролей
-MIN_PASSWORD_LENGTH = 8
-MAX_PASSWORD_LENGTH = 128
+MIN_PASSWORD_LENGTH: Final[int] = 8
+MAX_PASSWORD_LENGTH: Final[int] = 128
+SPECIAL_CHARS: Final[str] = "!@#$%^&*()-_=+[]{};:,.<>?/\\|"
 
-# Разрешённые специальные символы для паролей
-SPECIAL_CHARS = "!@#$%^&*()-_=+[]{};:,.<>?/\\|"
+# Безопасность URL и Email
+MAX_EMAIL_LENGTH: Final[int] = 254
+MAX_URL_LENGTH: Final[int] = 2048
+ALLOWED_URL_SCHEMES: Final[tuple[str, ...]] = ("http", "https")
 
-
-# Лимиты для пользовательских данных
-MAX_EMAIL_LENGTH = 254
-MAX_URL_LENGTH = 2048
-MAX_LOG_MESSAGE_LENGTH = 5000
-
-
-# Безопасные протоколы
-ALLOWED_URL_SCHEMES = ("http", "https")
-
+# Настройки Криптографии
+HASH_ITERATIONS: Final[int] = 600_000
+HASH_ALGORITHM: Final[str] = "sha256"
 
 # Настройки аудита
-AUDIT_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-AUDIT_DEFAULT_CHANNEL = "securitycore"
+AUDIT_TIMESTAMP_FORMAT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"
+AUDIT_DEFAULT_CHANNEL: Final[str] = "securitycore"
 
+# Лимиты аудита
+MAX_LOG_MESSAGE_LENGTH: Final[int] = 4096
 
-# Настройки криптографии
-HASH_ITERATIONS = 100_000
-HASH_ALGORITHM = "sha256"
-
-# Время жизни токенов (в секундах)
-TOKEN_EXPIRATION_SECONDS = 3600  # 1 час
-
-
-# Внутренние флаги
-DEBUG_MODE = False
-
-
-# Максимальная длина имени файла или пути
-MAX_PATH_LENGTH = 255
-
-
-# Запрещённые имена файлов (безопасность + совместимость)
-FORBIDDEN_FILENAMES = {
-    "con", "prn", "aux", "nul",
-    "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
-    "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
+# Безопасность файловой системы
+MAX_PATH_LENGTH: Final[int] = 255
+FORBIDDEN_FILENAMES: Final[set[str]] = {
+    "con", "prn", "aux", "nul", "com1",
+    "com2", "com3", "com4", "com5", "com6",
+    "com7", "com8", "com9", "lpt1", "lpt2",
+    "lpt3", "lpt4", "lpt5", "lpt6", "lpt7",
+    "lpt8", "lpt9",
 }
 
-
-# Запрещённые расширения (опасные форматы)
-FORBIDDEN_EXTENSIONS = {
-    ".exe", ".bat", ".cmd", ".sh", ".ps1",
-    ".js", ".vbs", ".msi", ".scr",
+FORBIDDEN_EXTENSIONS: Final[set[str]] = {
+    ".exe", ".bat", ".cmd", ".sh",
+    ".ps1", ".js", ".vbs", ".msi",
+    ".scr",
 }
 
+# Лимиты ввода
+MAX_SQL_INPUT_LENGTH: Final[int] = 500
+MAX_INPUT_LENGTH: Final[int] = 5000
+MAX_IP_LENGTH: Final[int] = 64
 
-# Максимальная длина SQL-параметра
-MAX_SQL_INPUT_LENGTH = 500
-
-
-# Максимальная длина пользовательского ввода
-MAX_INPUT_LENGTH = 5000
-
-
-# Максимальная длина строки IP-адреса.
-# 64 символа достаточно для всех форм IPv6 (включая сжатие, зоны, двоеточия),
-# и при этом защищают от чрезмерно длинных или вредоносных входных данных.
-MAX_IP_LENGTH = 64
+# Время жизни токенов
+TOKEN_EXPIRATION_SECONDS: Final[int] = 3600  # 1 час

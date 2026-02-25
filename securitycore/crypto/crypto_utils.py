@@ -3,19 +3,19 @@ import hmac
 import secrets
 
 from securitycore._internal.constants import (
-    DEFAULT_SALT_LENGTH,
     DEFAULT_ENCODING,
-    HASH_ITERATIONS,
-    HASH_ALGORITHM,
+    DEFAULT_SALT_LENGTH,
     DEFAULT_TOKEN_LENGTH,
+    HASH_ALGORITHM,
+    HASH_ITERATIONS,
 )
 from securitycore._internal.error import CryptoError
 
 
-# Генерация криптографически стойкой соли
 def generate_salt(length: int = DEFAULT_SALT_LENGTH) -> bytes:
     """
-    Возвращает криптографически стойкую соль.
+    Генерирует криптографически стойкую соль.
+    Соль используется для усиления хеширования паролей и других секретов.
     """
     if not isinstance(length, int) or length <= 0:
         raise CryptoError("Длина соли должна быть положительным числом")
@@ -26,48 +26,48 @@ def generate_salt(length: int = DEFAULT_SALT_LENGTH) -> bytes:
         raise CryptoError(f"Ошибка генерации соли: {exc}")
 
 
-# Хэширование данных PBKDF2-HMAC
 def hash_data(data: str, salt: bytes | None = None) -> tuple[bytes, bytes]:
-    """
-    Хэширует строку с использованием PBKDF2-HMAC.
-    Возвращает (salt, hash).
-    """
+    """Хеширует данные с помощью PBKDF2-HMAC.
+    Возвращает кортеж (хеш, соль)."""
     if not isinstance(data, str):
         raise CryptoError("Данные для хэширования должны быть строкой")
 
-    salt = salt or generate_salt()
+    current_salt: bytes = salt if salt is not None else generate_salt()
 
     try:
         hashed = hashlib.pbkdf2_hmac(
-            HASH_ALGORITHM,
-            data.encode(DEFAULT_ENCODING),
-            salt,
-            HASH_ITERATIONS,
+            HASH_ALGORITHM, data.encode(DEFAULT_ENCODING), current_salt, HASH_ITERATIONS
         )
-        return salt, hashed
+        return hashed, current_salt
     except Exception as exc:
-        raise CryptoError(f"Ошибка хэширования данных: {exc}")
+        raise CryptoError(f"Ошибка хеширования данных: {exc}")
 
 
-# Проверка соответствия данных и хэша
 def verify_hash(data: str, salt: bytes, expected_hash: bytes) -> bool:
     """
-    Проверяет, соответствует ли строка ранее вычисленному хэшу.
+    Безопасно проверяет соответсвие строки хэшу (защита от timing attacks).
     """
-    if not isinstance(data, str):
+    if (
+        not isinstance(data, str)
+        or not isinstance(salt, bytes)
+        or not isinstance(expected_hash, bytes)
+    ):
         return False
 
     try:
-        _, new_hash = hash_data(data, salt)
-        return hmac.compare_digest(new_hash, expected_hash)
+        # Прямое вычисление для максимальной производительности при проверке
+        actual_hash = hashlib.pbkdf2_hmac(
+            HASH_ALGORITHM, data.encode(DEFAULT_ENCODING), salt, HASH_ITERATIONS
+        )
+        return hmac.compare_digest(actual_hash, expected_hash)
     except Exception:
         return False
 
 
-# Генерация безопасного токена
 def generate_token(length: int = DEFAULT_TOKEN_LENGTH) -> str:
     """
     Возвращает криптографически стойкий токен в hex-формате.
+    Примечание: итоговая строка будет иметь длину length * 2.
     """
     if not isinstance(length, int) or length <= 0:
         raise CryptoError("Длина токена должна быть положительной")
@@ -78,7 +78,6 @@ def generate_token(length: int = DEFAULT_TOKEN_LENGTH) -> str:
         raise CryptoError(f"Ошибка генерации токена: {exc}")
 
 
-# Подпись данных HMAC
 def sign_data(data: str, key: bytes) -> bytes:
     """
     Создаёт HMAC-подпись данных.
@@ -90,17 +89,22 @@ def sign_data(data: str, key: bytes) -> bytes:
         raise CryptoError("Ключ для подписи должен быть байтовым")
 
     try:
-        return hmac.new(key, data.encode(DEFAULT_ENCODING), HASH_ALGORITHM).digest()
+        return hmac.new(
+            key, data.encode(DEFAULT_ENCODING), digestmod=HASH_ALGORITHM
+        ).digest()
     except Exception as exc:
         raise CryptoError(f"Ошибка подписи данных: {exc}")
 
 
-# Проверка подписи
 def verify_signature(data: str, key: bytes, signature: bytes) -> bool:
     """
     Проверяет корректность HMAC-подписи.
     """
-    if not isinstance(signature, (bytes, bytearray)):
+    if (
+        not isinstance(data, str)
+        or not isinstance(key, (bytes, bytearray))
+        or not isinstance(signature, (bytes, bytearray))
+    ):
         return False
 
     try:

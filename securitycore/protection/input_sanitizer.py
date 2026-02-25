@@ -1,4 +1,5 @@
 import html
+from typing import Any, Union
 
 from securitycore._internal.error import ValidationError
 from securitycore.utils.patterns import (
@@ -6,136 +7,77 @@ from securitycore.utils.patterns import (
     URL_PATTERN,
 )
 
-
-#  БАЗОВЫЕ САНИТАЙЗЕРЫ
 def sanitize_string(value: str) -> str:
-    """
-    Базовая нормализация строки:
-    - удаляет пробелы по краям
-    - убирает null-byte (\x00)
-    - гарантирует, что вход — строка
-    """
+    """Базовая нормализация строки."""
     if not isinstance(value, str):
         raise ValidationError("Ожидалась строка")
 
-    cleaned = value.strip()
-    cleaned = cleaned.replace("\x00", "")  # защита от null-byte injection
+    # Удаляем невидимые символы и null-байты
+    cleaned = value.strip().replace("\x00", "")
     return cleaned
 
-
 def sanitize_email(value: str) -> str:
-    """
-    Санитизация email:
-    - нормализует строку
-    - приводит к нижнему регистру
-    - проверяет по EMAIL_PATTERN
-    """
-    value = sanitize_string(value).lower()
+    """Санитизация email: нормализация + валидация."""
+    # Email всегда в нижнем регистре, пробелы не нужны
+    email = sanitize_string(value).lower().replace(" ", "")
 
-    if not EMAIL_PATTERN.match(value):
-        raise ValidationError("Некорректный email")
+    if not EMAIL_PATTERN.match(email):
+        raise ValidationError("Некорректный формат email")
 
-    return value
-
+    return email
 
 def sanitize_url(value: str) -> str:
-    """
-    Санитизация URL:
-    - нормализует строку
-    - HTML‑экранирует (защита от XSS)
-    - проверяет по URL_PATTERN
-    """
-    value = sanitize_string(value)
-    value = html.escape(value, quote=True)
+    """Санитизация URL: валидация ПЕРЕД экранированием."""
+    url = sanitize_string(value)
 
-    if not URL_PATTERN.match(value):
-        raise ValidationError("Некорректный URL")
+    # Сначала проверяем, что это вообще URL
+    if not URL_PATTERN.match(url):
+        raise ValidationError("Некорректный формат URL")
 
-    return value
-
+    # В библиотеке безопасности лучше вернуть чистый URL,
+    # а экранировать его должен слой представления (шаблонизатор)
+    return url
 
 def sanitize_text(value: str) -> str:
-    """
-    Санитизация произвольного текста:
-    - удаляет null-byte
-    - HTML‑экранирует весь текст
+    """XSS-safe очистка текста для вывода в HTML."""
+    cleaned = sanitize_string(value)
+    return html.escape(cleaned, quote=True)
 
-    Подходит для безопасного отображения пользовательского ввода (XSS‑safe).
-    """
-    if not isinstance(value, str):
-        raise ValidationError("Ожидалась строка")
-
-    value = value.replace("\x00", "")
-    return html.escape(value, quote=True)
-
-
-def sanitize_int(value) -> int:
-    """
-    Приведение к целому числу.
-    Любая ошибка → ValidationError.
-    """
+def sanitize_int(value: Any) -> int:
     try:
         return int(value)
-    except Exception:
+    except (ValueError, TypeError):
         raise ValidationError("Некорректное целое число")
 
+# --- УНИВЕРСАЛЬНЫЙ МЕТОД ---
 
-def sanitize_float(value) -> float:
+def input_sanitizer(value: Any) -> Union[str, int, float]:
     """
-    Приведение к числу с плавающей точкой.
-    Любая ошибка → ValidationError.
+    Универсальный вход для обработки данных.
     """
-    try:
-        return float(value)
-    except Exception:
-        raise ValidationError("Некорректное число с плавающей точкой")
+    if isinstance(value, (int, float)):
+        return value
 
+    if not isinstance(value, str):
+        raise ValidationError(f"Неподдерживаемый тип: {type(value)}")
 
+    cleaned = sanitize_string(value)
+    if not cleaned:
+        return ""
 
-#  УНИВЕРСАЛЬНЫЙ САНИТАЙЗЕР
-def input_sanitizer(value):
-    """
-    Универсальный санитайзер пользовательского ввода.
+    # 1. Проверка на Email (если есть @)
+    if "@" in cleaned:
+        try:
+            return sanitize_email(cleaned)
+        except ValidationError:
+            pass
 
-    Логика:
-    - если число → привести к числу
-    - если строка:
-        - нормализовать
-        - попытаться распознать email
-        - попытаться распознать URL
-        - иначе — безопасный текст (XSS‑safe)
-    - иначе → ValidationError
-    """
+    # 2. Проверка на URL
+    if cleaned.lower().startswith(("http://", "https://")):
+        try:
+            return sanitize_url(cleaned)
+        except ValidationError:
+            pass
 
-    # Числа
-    if isinstance(value, int):
-        return sanitize_int(value)
-
-    if isinstance(value, float):
-        return sanitize_float(value)
-
-    # Строки
-    if isinstance(value, str):
-        cleaned = sanitize_string(value)
-
-        # Попытка распознать email
-        if "@" in cleaned and "." in cleaned:
-            try:
-                return sanitize_email(cleaned)
-            except ValidationError:
-                # не email — продолжаем дальше
-                pass
-
-        # Попытка распознать URL
-        if cleaned.startswith(("http://", "https://")):
-            try:
-                return sanitize_url(cleaned)
-            except ValidationError:
-                # не URL — продолжаем дальше
-                pass
-
-        # Обычный текст (XSS‑safe)
-        return sanitize_text(cleaned)
-
-    # Всё остальное — ошибка
-    raise ValidationError("Неподдерживаемый тип данных для санитизации")
+    # 3. По умолчанию — безопасный текст
+    return sanitize_text(cleaned)

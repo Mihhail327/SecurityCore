@@ -1,48 +1,43 @@
-# Базовое исключение SecurityCore
+from typing import Any
+
+
 class SecurityCoreError(Exception):
     """
     Базовое исключение для всех ошибок в библиотеке SecurityCore.
-    Позволяет перехватывать любые внутренние ошибки единообразно.
     """
-    pass
+
+    def __init__(self, message: str, details: Any | None = None) -> None:
+        super().__init__(message)
+        self.details = details
 
 
-# Ошибки валидации
 class ValidationError(SecurityCoreError):
     """
     Ошибка валидации входных данных.
-    Используется валидаторами и санитайзерами.
     """
+
     pass
 
 
-# Ошибки безопасности
 class SecurityViolationError(SecurityCoreError):
     """
-    Ошибка, возникающая при попытке небезопасной операции:
-    - path traversal
-    - SQL-инъекция
-    - XSS
-    - небезопасные токены
+    Ошибка при попытке небезопасной операции.
     """
+
     pass
 
 
-# Ошибки криптографии
 class CryptoError(SecurityCoreError):
     """
-    Ошибка криптографических операций:
-    - генерация ключей
-    - хэширование
-    - подписи
-    - токены
+    Ошибка криптографических операций.
     """
+
     pass
 
 
-# Ошибки аудита
 class AuditError(SecurityCoreError):
     """
     Ошибка логирования или записи аудита.
     """
+
     pass

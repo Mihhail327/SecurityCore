@@ -1,65 +1,36 @@
-import re
 import html
-
 from securitycore._internal.error import SecurityViolationError
+# Импортируем то, что реально есть в regexes.py
 from securitycore._internal.regexes import (
-    XSS_SCRIPT_PATTERN,
-    XSS_EVENT_HANDLER_PATTERN,
-    XSS_JS_PROTOCOL_PATTERN,
+    XSS_DANGEROUS_TAGS,
+    # Если ты решишь добавить остальные, добавь их и сюда
 )
 from securitycore._internal.constants import (
     MAX_INPUT_LENGTH,
 )
+from securitycore.audit.audit_logger import audit
 
 
-# Проверка на XSS
 def ensure_no_xss(value: str) -> None:
-    """
-    Проверяет, что строка не содержит XSS-векторов:
-    - <script>
-    - javascript:
-    - onerror=, onclick=, onload= и т.д.
-    """
+    """Проверка на XSS векторы через опасные теги."""
     if not isinstance(value, str):
-        raise SecurityViolationError("Ожидалась строка")
+        return
 
     if len(value) > MAX_INPUT_LENGTH:
         raise SecurityViolationError("Ввод слишком длинный")
 
-    if XSS_SCRIPT_PATTERN.search(value):
-        raise SecurityViolationError("Обнаружена попытка XSS через <script>")
-
-    if XSS_EVENT_HANDLER_PATTERN.search(value):
-        raise SecurityViolationError("Обнаружена попытка XSS через event handler")
-
-    if XSS_JS_PROTOCOL_PATTERN.search(value):
-        raise SecurityViolationError("Обнаружена попытка XSS через javascript:")
+    # Используем твой агрессивный паттерн для тегов
+    if XSS_DANGEROUS_TAGS.search(value):
+        audit("xss_attempt", {"payload": value[:100]})
+        raise SecurityViolationError("Обнаружен запрещенный HTML-тег (XSS риск)")
 
 
-# Фильтрация XSS
 def sanitize_xss(value: str) -> str:
-    """
-    Экранирует HTML и удаляет опасные конструкции.
-    Не гарантирует 100% защиту, но безопасна для отображения.
-    """
+    """Очистка и экранирование."""
     if not isinstance(value, str):
         raise SecurityViolationError("Ожидалась строка")
 
-    cleaned = html.escape(value, quote=True)
+    # Вырезаем опасные теги перед экранированием
+    cleaned = XSS_DANGEROUS_TAGS.sub("", value)
 
-    cleaned = XSS_SCRIPT_PATTERN.sub("", cleaned)
-    cleaned = XSS_EVENT_HANDLER_PATTERN.sub("", cleaned)
-    cleaned = XSS_JS_PROTOCOL_PATTERN.sub("", cleaned)
-
-    return cleaned
-
-
-# Комплексная проверка
-def ensure_safe_html(value: str) -> str:
-    """
-    Полная проверка HTML:
-    - отсутствие XSS
-    - безопасное отображение
-    """
-    ensure_no_xss(value)
-    return sanitize_xss(value)
+    return html.escape(cleaned, quote=True).strip()

@@ -1,46 +1,67 @@
 import pytest
-from securitycore.crypto import crypto_utils
+from securitycore.crypto.crypto_utils import hash_data, sign_data, verify_signature
+from securitycore.crypto.keygen import generate_hex_key
+from securitycore.crypto.tokens import generate_token, verify_token
 
-# Тесты хэширования
 
-def test_hash_sha256():
-    result = crypto_utils.hash_sha256("test")
+# --- Тесты хэширования ---
+
+def test_hash_data_sha256():
+    """Проверяем SHA256 (дефолтный алгоритм)."""
+    result = hash_data("test")
     assert isinstance(result, str)
-    assert len(result) == 64 # SHA256 всегда 64 символа
+    assert len(result) == 64
+    # Проверка детерминированности
+    assert result == hash_data("test")
 
-def test_hash_md5():
-    result = crypto_utils.hash_md5("test")
+
+def test_hash_data_md5():
+    """Проверяем MD5 (через явное указание)."""
+    result = hash_data("test", algorithm="md5")
     assert isinstance(result, str)
-    assert len(result) == 32 # MD5 всегда 32 символа
+    assert len(result) == 32
 
 
-# Тесты генерации ключей и токенов
+# --- Тесты ключей и токенов ---
 
-def test_generate_secret_key():
-    key = crypto_utils.generate_secret_key(16)
+def test_generate_hex_key():
+    """Проверяем генерацию HEX-ключей."""
+    length = 16
+    key = generate_hex_key(length)
     assert isinstance(key, str)
-    assert len(key) == 32 # hex-строка длиной 2*length
+    assert len(key) == length * 2  # Каждому байту соответствует 2 hex-символа
 
-def test_generate_token():
-    token = crypto_utils.generate_token(16)
+
+def test_token_lifecycle():
+    """Проверяем полный цикл жизни токена."""
+    token = generate_token(length=32)
     assert isinstance(token, str)
-    # base64 строка, должна быть не пустой
+    assert len(token) > 20
 
-    assert len(token) > 0
+    # Проверяем верификацию
+    assert verify_token(token) is True
+    assert verify_token("invalid_token") is False
 
 
-# Тесты шифрования и дешифрования
+# --- Тесты подписей (HMAC) ---
 
-def test_encrypt_decrypt_message():
-    key = crypto_utils.generate_fernet_key()
-    message = "Hello SecurityCore!"
-    encrypted = crypto_utils.encrypt_message(message, key)
-    decrypted = crypto_utils.decrypt_message(encrypted, key)
+def test_signature_flow():
+    """Проверяем подпись и проверку данных."""
+    key = "super-secret-key"
+    data = "important-message"
 
-    assert isinstance(encrypted, str)
-    assert decrypted == message
+    signature = sign_data(data, key)
+    assert isinstance(signature, str)
 
-def test_decrypt_invalid_token():
-    key = crypto_utils.generate_fernet_key()
-    with pytest.raises(Exception):
-        crypto_utils.decrypt_message("invalidtoken", key)
+    # Валидная подпись
+    assert verify_signature(data, signature, key) is True
+    # Подмененные данные
+    assert verify_signature("hacked-message", signature, key) is False
+    # Неверный ключ
+    assert verify_signature(data, signature, "wrong-key") is False
+
+
+def test_hash_unsupported_algorithm():
+    """Проверяем реакцию на неподдерживаемый алгоритм."""
+    with pytest.raises(ValueError):
+        hash_data("test", algorithm="super-fast-hash")

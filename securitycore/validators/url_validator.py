@@ -1,60 +1,29 @@
 from securitycore._internal.error import ValidationError
 from securitycore._internal.constants import MAX_URL_LENGTH
 from securitycore._internal.regexes import ADVANCED_URL_REGEX
-from securitycore.utils.patterns import URL_PATTERN
 
-
-# Лёгкая проверка URL
-def is_url(value: str) -> bool:
-    """
-    Быстрая проверка URL:
-    - проверяет базовый формат
-    - подходит для UI, форм, первичной фильтрации
-    Использует лёгкий паттерн из utils.patterns.
-    """
+def is_valid_url(value: str) -> bool:
+    """Булева проверка: валиден ли URL по строгим правилам."""
     if not isinstance(value, str):
         return False
-
     value = value.strip()
+    return len(value) <= MAX_URL_LENGTH and bool(ADVANCED_URL_REGEX.match(value))
 
-    if len(value) > MAX_URL_LENGTH:
-        return False
-
-    return URL_PATTERN.match(value) is not None
-
-
-# Строгая проверка URL
 def validate_url(value: str) -> str:
-    """
-    Строгая проверка URL:
-    - поддержка http/https
-    - поддержка IPv4/IPv6
-    - поддержка query, fragment
-    - строгий синтаксис
-    Использует ADVANCED_URL_REGEX из _internal.regexes.
-    """
+    """Строгая валидация URL."""
     if not isinstance(value, str):
         raise ValidationError("URL должен быть строкой")
 
-    value = value.strip()
+    clean_url = value.strip()
 
-    if len(value) > MAX_URL_LENGTH:
-        raise ValidationError("URL слишком длинный")
+    if len(clean_url) > MAX_URL_LENGTH:
+        raise ValidationError(f"URL слишком длинный (макс. {MAX_URL_LENGTH} симв.)")
 
-    if not ADVANCED_URL_REGEX.match(value):
-        raise ValidationError("Некорректный URL")
+    if not ADVANCED_URL_REGEX.match(clean_url):
+        raise ValidationError("Некорректный формат URL (поддерживаются http/https)")
 
-    return value
+    return clean_url
 
-
-# Универсальная проверка
 def ensure_url(value: str) -> str:
-    """
-    Универсальная проверка URL:
-    - сначала лёгкая проверка
-    - затем строгая проверка
-    """
-    if not is_url(value):
-        raise ValidationError("Некорректный URL")
-
+    """Универсальный алиас для валидации."""
     return validate_url(value)

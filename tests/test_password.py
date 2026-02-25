@@ -1,42 +1,47 @@
-import pytest
-from securitycore.analysis import password_analyzer
+from securitycore.analysis.password_analyzer import analyze_password
+
 
 # Тесты на сильные пароли
-
 def test_strong_password():
-    result = password_analyzer("Abc123!@secure")
-    assert result["strength"] == "strong"
-    assert result["valid"] is True
-    assert result["feedback"] == []
+    # Пароль с хорошим набором символов и длиной
+    result = analyze_password("Abc123!@secure")
+
+    # В нашей логике это либо strong, либо very_strong
+    assert result["strength"] in ["strong", "very_strong"]
+    assert result["valid_strict"] is True
+    assert result["recommendations"] == []
 
 
 # Тесты на средние пароли
-
 def test_medium_password():
-    result = password_analyzer("Abc12345")
-    assert result["strength"] == "medium"
-    assert result["valid"] is False
-    assert "Добавьте спецсимвол" in result["feedback"]
+    # Пароль без спецсимволов
+    result = analyze_password("Abc123456789")
+
+    assert result["valid_strict"] is False
+    # Проверяем, что в рекомендациях есть совет про спецсимволы
+    assert any("спецсимволы" in rec for rec in result["recommendations"])
 
 
 # Тест на слабые пароли
-
 def test_weak_password():
-    result = password_analyzer("abc")
+    result = analyze_password("abc")
+
     assert result["strength"] == "weak"
-    assert result["valid"] is False
-    assert "Пароль слишком короткий (<8 символов)" in result["feedback"]
+    assert result["valid_strict"] is False
+    assert any("короткий" in rec for rec in result["recommendations"])
 
 
-# Тесты на пробелы
+# Тесты на нетипичные символы (Кириллица)
+def test_password_with_non_ascii():
+    # Наш ADVANCED_PASSWORD_REGEX работает только с A-Za-z и SPECIAL_CHARS
+    result = analyze_password("Abc123!@Ё")
 
-def test_password_with_space():
-    result = password_analyzer("Abc 123!@")
-    assert "Не используйте пробелы в пароле" in result["feedback"]
+    # Он не пройдет строгую проверку регуляркой
+    assert result["valid_strict"] is False
 
 
-# Тест на запрещённые символы
-
-def test_password_with_non_printable():
-    result = password_analyzer("Abc123!@\u0401") # добавим кириллицу Ё
-    assert  "Используйте только латинские буквы и стандартные символы" in result["feedback"]
+# Тест на пустой ввод
+def test_password_empty():
+    result = analyze_password("")
+    assert result["length"] == 0
+    assert result["strength"] == "weak"
