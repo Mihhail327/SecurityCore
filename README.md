@@ -47,9 +47,9 @@ cd SecurityCore && poetry install
 > Не просто считает длину, а вычисляет реальную стойкость к брутфорсу.
 
 ```python
-from securitycore import analyze_password
+from securitycore import password_analyzer
 
-res = analyze_password("SuperSecret123!")
+res = password_analyzer("SuperSecret123!")
 print(f"📊 Стойкость: {res['strength']} ({res['bits']:.2f} bits)")
 
 ```
