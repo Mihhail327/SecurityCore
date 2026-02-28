@@ -3,7 +3,7 @@ from securitycore._internal.constants import SPECIAL_CHARS, MIN_PASSWORD_LENGTH
 from securitycore.analysis.entropy import entropy as get_entropy, estimate_charset_size, brute_force_resistance
 
 
-def analyze_password(password: str) -> dict:
+def password_analyzer(password: str) -> dict:
     """
     Возвращает комплексный аудит безопасности пароля.
     """

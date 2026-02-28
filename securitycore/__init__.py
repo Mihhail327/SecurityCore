@@ -34,6 +34,7 @@ from .audit.json_logger import audit_json
 
 # NEW — analysis facade
 from .analysis import entropy, total_entropy, estimate_charset_size
+from .analysis import password_analyzer
 
 __all__ = [
     # crypto
@@ -73,4 +74,5 @@ __all__ = [
     "entropy",
     "total_entropy",
     "estimate_charset_size",
+    "password_analyzer",
 ]
