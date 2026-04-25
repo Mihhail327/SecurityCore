@@ -12,9 +12,13 @@ from securitycore._internal.error import AuditError
 try:
     from securitycore.utils.helpers import safe_str
 except ImportError:
-    def safe_str(v: Any) -> str: return str(v)[:100] # Временная заглушка
+
+    def safe_str(v: Any) -> str:
+        return str(v)[:100]  # Временная заглушка
+
 
 _logger = logging.getLogger(AUDIT_DEFAULT_CHANNEL)
+
 
 def _format_audit_record(event: str, details: Optional[Dict[str, Any]] = None) -> str:
     """Формирует строку: YYYY-MM-DD HH:MM:SS | event | k=v, k=v"""
@@ -36,6 +40,7 @@ def _format_audit_record(event: str, details: Optional[Dict[str, Any]] = None) -
         raise AuditError(f"Ошибка форматирования деталей: {exc}")
 
     return f"{timestamp} | {event} | {details_str}"
+
 
 def audit(event: str, details: Optional[Dict[str, Any]] = None) -> None:
     """Записывает событие аудита."""

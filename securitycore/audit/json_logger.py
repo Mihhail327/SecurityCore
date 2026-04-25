@@ -14,16 +14,19 @@ from securitycore._internal.error import AuditError
 try:
     from securitycore.utils.helpers import safe_str
 except ImportError:
-    def safe_str(v: Any) -> str: return str(v)[:255]
+
+    def safe_str(v: Any) -> str:
+        return str(v)[:255]
+
 
 # Инициализация логгера для JSON-канала
 _logger = logging.getLogger(f"{AUDIT_DEFAULT_CHANNEL}.json")
+
 
 def _build_json_record(event: str, details: Optional[Dict[str, Any]] = None) -> str:
     """Формирует компактную JSON-строку аудита."""
     if details is not None and not isinstance(details, dict):
         raise AuditError("Поле 'details' должно быть словарём")
-
 
     record = {
         "timestamp": datetime.now(timezone.utc).strftime(AUDIT_TIMESTAMP_FORMAT),
@@ -33,7 +36,7 @@ def _build_json_record(event: str, details: Optional[Dict[str, Any]] = None) -> 
 
     try:
         # Компактная сериализация без лишних пробелов
-        json_str = json.dumps(record, ensure_ascii=False, separators=(',', ':'))
+        json_str = json.dumps(record, ensure_ascii=False, separators=(",", ":"))
     except Exception as exc:
         raise AuditError(f"Ошибка сериализации JSON: {exc}")
 
@@ -41,6 +44,7 @@ def _build_json_record(event: str, details: Optional[Dict[str, Any]] = None) -> 
         raise AuditError(f"JSON-запись слишком длинная ({len(json_str)} символов)")
 
     return json_str
+
 
 def audit_json(event: str, details: Optional[Dict[str, Any]] = None) -> None:
     """Записывает событие аудита в формате JSON."""
@@ -51,6 +55,6 @@ def audit_json(event: str, details: Optional[Dict[str, Any]] = None) -> None:
         json_record = _build_json_record(event, details)
         _logger.info(json_record)
     except AuditError:
-        raise # Пробрасываем наши ошибки дальше
+        raise  # Пробрасываем наши ошибки дальше
     except Exception as exc:
         raise AuditError(f"Критическая ошибка JSON-аудита: {exc}")

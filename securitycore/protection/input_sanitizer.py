@@ -7,6 +7,7 @@ from securitycore.utils.patterns import (
     URL_PATTERN,
 )
 
+
 def sanitize_string(value: str) -> str:
     """Базовая нормализация строки."""
     if not isinstance(value, str):
@@ -15,6 +16,7 @@ def sanitize_string(value: str) -> str:
     # Удаляем невидимые символы и null-байты
     cleaned = value.strip().replace("\x00", "")
     return cleaned
+
 
 def sanitize_email(value: str) -> str:
     """Санитизация email: нормализация + валидация."""
@@ -25,6 +27,7 @@ def sanitize_email(value: str) -> str:
         raise ValidationError("Некорректный формат email")
 
     return email
+
 
 def sanitize_url(value: str) -> str:
     """Санитизация URL: валидация ПЕРЕД экранированием."""
@@ -38,10 +41,12 @@ def sanitize_url(value: str) -> str:
     # а экранировать его должен слой представления (шаблонизатор)
     return url
 
+
 def sanitize_text(value: str) -> str:
     """XSS-safe очистка текста для вывода в HTML."""
     cleaned = sanitize_string(value)
     return html.escape(cleaned, quote=True)
+
 
 def sanitize_int(value: Any) -> int:
     try:
@@ -49,7 +54,9 @@ def sanitize_int(value: Any) -> int:
     except (ValueError, TypeError):
         raise ValidationError("Некорректное целое число")
 
+
 # --- УНИВЕРСАЛЬНЫЙ МЕТОД ---
+
 
 def input_sanitizer(value: Any) -> Union[str, int, float]:
     """

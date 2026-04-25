@@ -25,7 +25,7 @@ ADVANCED_URL_REGEX: Final[re.Pattern] = re.compile(
     r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # IPv4
     r"(?::\d+)?"  # Порт
     r"(?:/?|[/?]\S+)$",  # Путь и параметры
-    re.IGNORECASE
+    re.IGNORECASE,
 )
 
 # SQL Injection - расширен на детектирование специфических техник
@@ -40,10 +40,7 @@ SQL_INJECTION_PATTERN: Final[re.Pattern] = re.compile(
 )
 
 # Опасные метасимволы (кавычки, комментарии, точка с запятой)
-SQL_META_CHARS_PATTERN = re.compile(
-    r"[;#'\"`]|--|\*/|/\*",
-    re.IGNORECASE
-)
+SQL_META_CHARS_PATTERN = re.compile(r"[;#'\"`]|--|\*/|/\*", re.IGNORECASE)
 
 # Advanced Password - динамически берем длину из констант
 # Используем экранирование для спецсимволов из constants
@@ -61,14 +58,11 @@ XSS_DANGEROUS_TAGS: Final[re.Pattern] = re.compile(
 
 # Path traversal detection
 PATH_TRAVERSAL_PATTERN = re.compile(
-    r"(\.\./|\.\.\\|%2e%2e/|%2e%2e\\|%2e%2f|%2f%2e)",
-    re.IGNORECASE
+    r"(\.\./|\.\.\\|%2e%2e/|%2e%2e\\|%2e%2f|%2f%2e)", re.IGNORECASE
 )
 
 # Invalid filename characters
-INVALID_FILENAME_PATTERN = re.compile(
-    r"[<>:\"/\\|?*\x00-\x1F]|\s+$|\.$"
-)
+INVALID_FILENAME_PATTERN = re.compile(r"[<>:\"/\\|?*\x00-\x1F]|\s+$|\.$")
 
 # IPv4 - Строгий паттерн с проверкой октетов 0-255
 IPV4_REGEX: Final[re.Pattern] = re.compile(
@@ -78,5 +72,5 @@ IPV4_REGEX: Final[re.Pattern] = re.compile(
 # IPv6 - Полный паттерн (RFC 4291)
 FULL_IPV6_REGEX: Final[re.Pattern] = re.compile(
     r"^(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){1,7}:|(?:[0-9A-Fa-f]{1,4}:){1,6}:[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){1,5}(?::[0-9A-Fa-f]{1,4}){1,2}|(?:[0-9A-Fa-f]{1,4}:){1,4}(?::[0-9A-Fa-f]{1,4}){1,3}|(?:[0-9A-Fa-f]{1,4}:){1,3}(?::[0-9A-Fa-f]{1,4}){1,4}|(?:[0-9A-Fa-f]{1,4}:){1,2}(?::[0-9A-Fa-f]{1,4}){1,5}|[0-9A-Fa-f]{1,4}:(?::[0-9A-Fa-f]{1,4}){1,6}|:(?:(?::[0-9A-Fa-f]{1,4}){1,7}|:)|fe80:(?::[0-9A-Fa-f]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(?:ffff(?::0{1,4}){0,1}:){0,1}(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9])[0-9])\.){3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9])[0-9])|(?:[0-9A-Fa-f]{1,4}:){1,4}:(?:(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9])[0-9])\.){3}(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9])[0-9]))$",
-    re.IGNORECASE
+    re.IGNORECASE,
 )

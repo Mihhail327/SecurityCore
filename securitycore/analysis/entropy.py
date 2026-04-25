@@ -42,7 +42,7 @@ def estimate_charset_size(value: str) -> int:
         "lower": False,
         "upper": False,
         "digit": False,
-        "special": False
+        "special": False,
     }
 
     special_set = set(SPECIAL_CHARS)
@@ -62,12 +62,7 @@ def estimate_charset_size(value: str) -> int:
             break
 
     # Маппинг весов категорий
-    weights = {
-        "lower": 26,
-        "upper": 26,
-        "digit": 10,
-        "special": len(SPECIAL_CHARS)
-    }
+    weights = {"lower": 26, "upper": 26, "digit": 10, "special": len(SPECIAL_CHARS)}
 
     # Считаем итоговый размер через генератор
     size = sum(weights[cat] for cat, found in found_categories.items() if found)

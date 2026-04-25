@@ -29,16 +29,39 @@ MAX_LOG_MESSAGE_LENGTH: Final[int] = 4096
 # Безопасность файловой системы
 MAX_PATH_LENGTH: Final[int] = 255
 FORBIDDEN_FILENAMES: Final[set[str]] = {
-    "con", "prn", "aux", "nul", "com1",
-    "com2", "com3", "com4", "com5", "com6",
-    "com7", "com8", "com9", "lpt1", "lpt2",
-    "lpt3", "lpt4", "lpt5", "lpt6", "lpt7",
-    "lpt8", "lpt9",
+    "con",
+    "prn",
+    "aux",
+    "nul",
+    "com1",
+    "com2",
+    "com3",
+    "com4",
+    "com5",
+    "com6",
+    "com7",
+    "com8",
+    "com9",
+    "lpt1",
+    "lpt2",
+    "lpt3",
+    "lpt4",
+    "lpt5",
+    "lpt6",
+    "lpt7",
+    "lpt8",
+    "lpt9",
 }
 
 FORBIDDEN_EXTENSIONS: Final[set[str]] = {
-    ".exe", ".bat", ".cmd", ".sh",
-    ".ps1", ".js", ".vbs", ".msi",
+    ".exe",
+    ".bat",
+    ".cmd",
+    ".sh",
+    ".ps1",
+    ".js",
+    ".vbs",
+    ".msi",
     ".scr",
 }
 

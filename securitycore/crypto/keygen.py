@@ -51,13 +51,15 @@ def generate_hmac_key(length: int = DEFAULT_TOKEN_LENGTH) -> bytes:
     return generate_bytes_key(length)
 
 
-def generate_api_key(length: int = 32) -> str:
+def generate_api_key(length: int = 32, prefix: str = "sec_live_") -> str:
     """
-    Генерирует человекочитаемый API-ключ в верхнем регистре.
+    Генерирует человекочитаемый API-ключ.
     length: количество байт энтропии (итоговая строка будет в 2 раза длиннее).
+    prefix: префикс для ключа (например, sec_live_ для продакшена).
     """
     try:
-        # Переиспользуем существующую логику
-        return generate_hex_key(length).upper()
+        # Генерируем ключ и добавляем префикс
+        key_body = generate_hex_key(length)
+        return f"{prefix}{key_body}"
     except Exception as exc:
         raise CryptoError(f"Ошибка генерации API-ключа: {exc}")

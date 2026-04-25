@@ -1,6 +1,10 @@
 from securitycore._internal.regexes import ADVANCED_PASSWORD_REGEX
 from securitycore._internal.constants import SPECIAL_CHARS, MIN_PASSWORD_LENGTH
-from securitycore.analysis.entropy import entropy as get_entropy, estimate_charset_size, brute_force_resistance
+from securitycore.analysis.entropy import (
+    entropy as get_entropy,
+    estimate_charset_size,
+    brute_force_resistance,
+)
 
 
 def password_analyzer(password: str) -> dict:
@@ -21,9 +25,13 @@ def password_analyzer(password: str) -> dict:
 
     # Анализ длины
     if length < MIN_PASSWORD_LENGTH:
-        recommendations.append(f"Критически короткий пароль (минимум {MIN_PASSWORD_LENGTH})")
+        recommendations.append(
+            f"Критически короткий пароль (минимум {MIN_PASSWORD_LENGTH})"
+        )
     elif length < 12:
-        recommendations.append("Рекомендуется увеличить длину до 12+ символов для защиты от GPU-перебора")
+        recommendations.append(
+            "Рекомендуется увеличить длину до 12+ символов для защиты от GPU-перебора"
+        )
 
     # Рекомендации по составу (базируются на размере алфавита)
     # Если размер мал, значит чего-то явно не хватает

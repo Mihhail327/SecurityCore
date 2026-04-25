@@ -5,12 +5,21 @@ description = "Modular library for analysis, data protection, and validation"
 authors = [
     {name = "Mihhail327",email = "mixa-amr@hotmail.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = ["cryptography (>=46.0.5,<47.0.0)", "pydantic (>=2.12.5,<3.0.0)"]
+dependencies = [
+    "cryptography (>=46.0.5,<47.0.0)", 
+    "pydantic (>=2.12.5,<3.0.0)",
+    "PyJWT (>=2.8.0,<3.0.0)",
+    "argon2-cffi (>=23.1.0,<24.0.0)",
+    "nh3 (>=0.2.15,<1.0.0)",
+]
 
 keywords = ["security", "cryptography", "validation", "xss-protection", "audit"]
+
+[project.optional-dependencies]
+fastapi = ["fastapi (>=0.100.0,<1.0.0)", "starlette (>=0.27.0,<1.0.0)"]
 
 [project.urls]
 Homepage = "https://github.com/Mihhail327/SecurityCore"
@@ -24,5 +33,5 @@ build-backend = "poetry.core.masonry.api"
 [dependency-groups]
 dev = [
     "ruff (>=0.15.2,<0.16.0)",
-    "pytest (>=9.0.2,<10.0.0)"
+    "pytest (>=9.0.2,<10.0.0)",
 ]

@@ -30,15 +30,20 @@ def validate_password(value: str) -> str:
 
     length = len(value)
     if length < MIN_PASSWORD_LENGTH:
-        raise ValidationError(f"Пароль слишком короткий (минимум {MIN_PASSWORD_LENGTH} симв.)")
+        raise ValidationError(
+            f"Пароль слишком короткий (минимум {MIN_PASSWORD_LENGTH} симв.)"
+        )
 
     if length > MAX_PASSWORD_LENGTH:
-        raise ValidationError(f"Пароль слишком длинный (максимум {MAX_PASSWORD_LENGTH} симв.)")
+        raise ValidationError(
+            f"Пароль слишком длинный (максимум {MAX_PASSWORD_LENGTH} симв.)"
+        )
 
     if not ADVANCED_PASSWORD_REGEX.match(value):
         # Здесь можно расширить описание: "нужны цифры, заглавные буквы и т.д."
         raise ValidationError(
-            "Пароль не соответствует требованиям сложности (нужны буквы в разных регистрах, цифры и спецсимволы)")
+            "Пароль не соответствует требованиям сложности (нужны буквы в разных регистрах, цифры и спецсимволы)"
+        )
 
     return value
 

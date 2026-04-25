@@ -2,6 +2,23 @@ import hashlib
 import hmac
 import secrets
 
+try:
+    from argon2 import PasswordHasher
+    from argon2.exceptions import VerifyMismatchError
+
+    _ARGON2_AVAILABLE = True
+    # Настройки по умолчанию (Senior Level config)
+    _ph = PasswordHasher(
+        time_cost=3,  # iterations
+        memory_cost=65536,  # 64MB
+        parallelism=4,  # 4 threads
+        hash_len=32,
+        salt_len=16,
+    )
+except ImportError:
+    _ARGON2_AVAILABLE = False
+    _ph = None
+
 from securitycore._internal.constants import (
     DEFAULT_ENCODING,
     DEFAULT_SALT_LENGTH,
@@ -46,6 +63,7 @@ def hash_data(data: str, salt: bytes | None = None) -> tuple[bytes, bytes]:
 def verify_hash(data: str, salt: bytes, expected_hash: bytes) -> bool:
     """
     Безопасно проверяет соответсвие строки хэшу (защита от timing attacks).
+    (Legacy PBKDF2 функция)
     """
     if (
         not isinstance(data, str)
@@ -60,6 +78,40 @@ def verify_hash(data: str, salt: bytes, expected_hash: bytes) -> bool:
             HASH_ALGORITHM, data.encode(DEFAULT_ENCODING), salt, HASH_ITERATIONS
         )
         return hmac.compare_digest(actual_hash, expected_hash)
+    except Exception:
+        return False
+
+
+def hash_password(password: str) -> str:
+    """
+    Хеширует пароль с использованием Argon2id (стандарт де-факто).
+    Возвращает строку в формате PHC, например:
+    $argon2id$v=19$m=65536,t=3,p=4$salt$hash
+    """
+    if not _ARGON2_AVAILABLE:
+        raise CryptoError("Модуль argon2-cffi не установлен")
+    if not isinstance(password, str):
+        raise CryptoError("Пароль должен быть строкой")
+
+    try:
+        return _ph.hash(password)
+    except Exception as exc:
+        raise CryptoError(f"Ошибка хеширования Argon2: {exc}")
+
+
+def verify_password(password: str, pwhash: str) -> bool:
+    """
+    Проверяет пароль относительно Argon2 хеша.
+    """
+    if not _ARGON2_AVAILABLE:
+        raise CryptoError("Модуль argon2-cffi не установлен")
+    if not isinstance(password, str) or not isinstance(pwhash, str):
+        return False
+
+    try:
+        return _ph.verify(pwhash, password)
+    except VerifyMismatchError:
+        return False
     except Exception:
         return False
 

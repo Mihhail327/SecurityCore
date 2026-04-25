@@ -3,6 +3,8 @@
 from .crypto.crypto_utils import (
     hash_data,
     verify_hash,
+    hash_password,
+    verify_password,
     generate_token as generate_raw_token,
     sign_data,
     verify_signature,
@@ -12,6 +14,7 @@ from .crypto.keygen import (
     generate_hex_key,
     generate_hmac_key,
     derive_key_from_password,
+    generate_api_key,
 )
 from .crypto.tokens import (
     generate_token,
@@ -40,23 +43,24 @@ __all__ = [
     # crypto
     "hash_data",
     "verify_hash",
+    "hash_password",
+    "verify_password",
     "generate_raw_token",
     "generate_bytes_key",
     "generate_hex_key",
     "generate_hmac_key",
     "derive_key_from_password",
+    "generate_api_key",
     "generate_token",
     "verify_token",
     "create_token_pair",
     "sign_data",
     "verify_signature",
-
     # validators
     "validate_email",
     "validate_url",
     "validate_ip",
     "validate_password",
-
     # protection
     "sanitize_xss",
     "ensure_no_xss",
@@ -65,11 +69,9 @@ __all__ = [
     "ensure_safe_path",
     "ensure_safe_filename",
     "input_sanitizer",
-
     # audit
     "audit",
     "audit_json",
-
     # analysis
     "entropy",
     "total_entropy",
