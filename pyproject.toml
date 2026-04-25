@@ -1,6 +1,6 @@
 [project]
 name = "securitycore"
-version = "1.1.1"
+version = "1.2.2"
 description = "Modular library for analysis, data protection, and validation"
 authors = [
     {name = "Mihhail327",email = "mixa-amr@hotmail.com"}
