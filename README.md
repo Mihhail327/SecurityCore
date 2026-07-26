@@ -1,4 +1,3 @@
----
 
 # 🔐 SecurityCore
 
@@ -9,6 +8,8 @@
 <img src="https://img.shields.io/badge/Poetry-Project-6366f1?style=for-the-badge&logo=poetry&logoColor=white" alt="Poetry">
 <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
 </p>
+
+---
 
 **SecurityCore** — это швейцарский нож для обеспечения безопасности ваших данных. Объединил продвинутый анализ энтропии, многоуровневую защиту от инъекций и строгую валидацию в один лаконичный SDK.
 
