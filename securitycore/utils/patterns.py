@@ -1,42 +1,18 @@
 import re
 
-
-# Email (упрощённый, но практичный)
-EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
-
-
-# URL (http/https, домен, путь, параметры)
-URL_PATTERN = re.compile(
-    r"^(https?://)"
-    r"([A-Za-z0-9.-]+)"
-    r"(:\d+)?"
-    r"(/.*)?$"
+from securitycore._internal.regexes import (
+    RFC5322_EMAIL_REGEX as EMAIL_PATTERN,
+    ADVANCED_URL_REGEX as URL_PATTERN,
+    IPV4_REGEX as IPV4_PATTERN,
+    FULL_IPV6_REGEX as IPV6_PATTERN,
+    ADVANCED_PASSWORD_REGEX as PASSWORD_PATTERN,
 )
-
-
-# IPv4
-IPV4_PATTERN = re.compile(
-    r"^("
-    r"(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}"
-    r"(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$"
-)
-
-
-# IPv6 (упрощённый, но рабочий)
-IPV6_PATTERN = re.compile(r"^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$")
-
-
-# Пароль (минимум 8 символов, буквы + цифры)
-PASSWORD_PATTERN = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_\-+=]{8,}$")
-
 
 # Имя пользователя (буквы, цифры, _, -, 3–32 символа)
 USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]{3,32}$")
 
-
 # Домен (example.com)
 DOMAIN_PATTERN = re.compile(r"^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
-
 
 # UUID v4
 UUID4_PATTERN = re.compile(
@@ -47,3 +23,15 @@ UUID4_PATTERN = re.compile(
     r"[a-f0-9]{12}$",
     re.IGNORECASE,
 )
+
+__all__ = [
+    "EMAIL_PATTERN",
+    "URL_PATTERN",
+    "IPV4_PATTERN",
+    "IPV6_PATTERN",
+    "PASSWORD_PATTERN",
+    "USERNAME_PATTERN",
+    "DOMAIN_PATTERN",
+    "UUID4_PATTERN",
+]
+

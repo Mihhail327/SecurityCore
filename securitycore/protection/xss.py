@@ -6,6 +6,9 @@ from securitycore._internal.constants import MAX_INPUT_LENGTH
 from securitycore.audit.audit_logger import audit
 
 
+from securitycore._internal.regexes import XSS_DANGEROUS_TAGS
+
+
 class SafeString(str):
     """
     Класс-обертка, обозначающий, что строка безопасна для рендеринга (XSS-safe).
@@ -25,14 +28,10 @@ def ensure_no_xss(value: str) -> None:
     if len(value) > MAX_INPUT_LENGTH:
         raise SecurityViolationError("Ввод слишком длинный")
 
-    # Детектируем наличие скриптов или опасных атрибутов
-    if (
-        "<script" in value.lower()
-        or "javascript:" in value.lower()
-        or "onerror=" in value.lower()
-    ):
+    # Детектируем наличие скриптов, опасных событий (on*=) или схем (javascript:)
+    if XSS_DANGEROUS_TAGS.search(value):
         audit("xss_attempt", {"payload": value[:100]})
-        raise SecurityViolationError("Обнаружен запрещенный HTML-тег (XSS риск)")
+        raise SecurityViolationError("Обнаружен запрещенный HTML-тег или атрибут (XSS риск)")
 
 
 def sanitize_xss(value: str, strict: bool = False) -> SafeString:

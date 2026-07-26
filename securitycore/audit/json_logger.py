@@ -41,7 +41,8 @@ def _build_json_record(event: str, details: Optional[Dict[str, Any]] = None) -> 
         raise AuditError(f"Ошибка сериализации JSON: {exc}")
 
     if len(json_str) > MAX_LOG_MESSAGE_LENGTH:
-        raise AuditError(f"JSON-запись слишком длинная ({len(json_str)} символов)")
+        record["details"] = "[TRUNCATED]"
+        json_str = json.dumps(record, ensure_ascii=False, separators=(",", ":"))
 
     return json_str
 

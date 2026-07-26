@@ -8,8 +8,9 @@ from securitycore.crypto.keygen import generate_hmac_key
 
 def generate_token(
     payload: dict,
-    key: bytes | None = None,
+    key: bytes | str,
     expires_in: int = TOKEN_EXPIRATION_SECONDS,
+    algorithm: str = "HS256",
 ) -> str:
     """
     Создаёт подписанный токен в формате JWT.
@@ -17,34 +18,36 @@ def generate_token(
     if not isinstance(payload, dict):
         raise CryptoError("Payload должен быть словарём")
 
-    # Используем переданный ключ или генерируем новый
-    working_key = key if key is not None else generate_hmac_key()
+    if key is None:
+        raise CryptoError("Ключ подписи 'key' обязателен для генерации JWT токена")
 
     try:
-        # Для обратной совместимости с `data` внутри словаря
-        # Стандарт JWT: используем claim `exp` для времени
         jwt_payload = {
             "exp": int(time.time()) + expires_in,
             "data": payload,
         }
 
-        # PyJWT сам закодирует всё в base64url и подпишет
-        token = jwt.encode(jwt_payload, working_key, algorithm="HS256")
+        token = jwt.encode(jwt_payload, key, algorithm=algorithm)
         return token
     except Exception as exc:
         raise CryptoError(f"Ошибка генерации токена: {exc}")
 
 
-def verify_token(token: str, key: bytes) -> dict:
+def verify_token(
+    token: str,
+    key: bytes | str,
+    algorithms: list[str] | tuple[str, ...] | None = None,
+) -> dict:
     """
     Проверяет подпись и срок действия токена (JWT).
     """
     if not isinstance(token, str):
         raise CryptoError("Некорректный формат токена")
 
+    allowed_algorithms = list(algorithms) if algorithms else ["HS256"]
+
     try:
-        # PyJWT сам проверит подпись и время жизни (exp)
-        decoded = jwt.decode(token, key, algorithms=["HS256"])
+        decoded = jwt.decode(token, key, algorithms=allowed_algorithms)
         return decoded.get("data", {})
     except jwt.ExpiredSignatureError:
         raise CryptoError("Срок действия токена истёк")
@@ -57,8 +60,9 @@ def verify_token(token: str, key: bytes) -> dict:
 def create_token_pair(
     payload: dict,
     expires_in: int = TOKEN_EXPIRATION_SECONDS,
+    algorithm: str = "HS256",
 ) -> tuple[str, bytes]:
     """Создаёт токен и возвращает его вместе с ключом."""
     key = generate_hmac_key()
-    token = generate_token(payload, key, expires_in)
+    token = generate_token(payload, key, expires_in, algorithm=algorithm)
     return token, key

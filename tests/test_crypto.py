@@ -96,6 +96,23 @@ def test_signature_flow():
     assert verify_signature(data, b"wrong-key", signature) is False
 
 
+def test_generate_token_missing_key():
+    """Проверяем, что генерация токена без ключа вызывает CryptoError."""
+    from securitycore.crypto.tokens import generate_token
+    with pytest.raises(CryptoError):
+        generate_token({"user_id": 123}, key=None)  # type: ignore
+
+
+def test_argon2_custom_config():
+    """Проверяем хеширование с кастомной конфигурацией Argon2Config."""
+    from securitycore.crypto.crypto_utils import hash_password, verify_password, Argon2Config
+
+    cfg = Argon2Config(time_cost=2, memory_cost=32768, parallelism=2)
+    pwhash = hash_password("MyPassword123!", config=cfg)
+    assert "$m=32768,t=2,p=2$" in pwhash
+    assert verify_password("MyPassword123!", pwhash, config=cfg) is True
+
+
 def test_sign_data_invalid_types():
     with pytest.raises(CryptoError):
         sign_data("data", "string-key-not-bytes")  # type: ignore

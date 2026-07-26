@@ -1,6 +1,9 @@
 from .crypto_utils import (
     hash_data,
     verify_hash,
+    hash_password,
+    verify_password,
+    Argon2Config,
     sign_data,
     verify_signature,
 )
@@ -19,6 +22,9 @@ from .tokens import (
 __all__ = [
     "hash_data",
     "verify_hash",
+    "hash_password",
+    "verify_password",
+    "Argon2Config",
     "sign_data",
     "verify_signature",
     "generate_bytes_key",

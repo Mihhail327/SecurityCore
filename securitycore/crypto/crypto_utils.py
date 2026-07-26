@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import secrets
+from dataclasses import dataclass
 
 try:
     from argon2 import PasswordHasher
@@ -82,7 +83,31 @@ def verify_hash(data: str, salt: bytes, expected_hash: bytes) -> bool:
         return False
 
 
-def hash_password(password: str) -> str:
+@dataclass
+class Argon2Config:
+    """Конфигурация параметров хеширования Argon2."""
+    time_cost: int = 3
+    memory_cost: int = 65536  # 64MB
+    parallelism: int = 4
+    hash_len: int = 32
+    salt_len: int = 16
+
+
+def get_argon2_hasher(config: Argon2Config | None = None):
+    """Создаёт экземпляр PasswordHasher с заданной конфигурацией."""
+    if not _ARGON2_AVAILABLE:
+        raise CryptoError("Модуль argon2-cffi не установлен")
+    cfg = config or Argon2Config()
+    return PasswordHasher(
+        time_cost=cfg.time_cost,
+        memory_cost=cfg.memory_cost,
+        parallelism=cfg.parallelism,
+        hash_len=cfg.hash_len,
+        salt_len=cfg.salt_len,
+    )
+
+
+def hash_password(password: str, config: Argon2Config | None = None) -> str:
     """
     Хеширует пароль с использованием Argon2id (стандарт де-факто).
     Возвращает строку в формате PHC, например:
@@ -94,12 +119,13 @@ def hash_password(password: str) -> str:
         raise CryptoError("Пароль должен быть строкой")
 
     try:
-        return _ph.hash(password)
+        hasher = get_argon2_hasher(config) if config else _ph
+        return hasher.hash(password)
     except Exception as exc:
         raise CryptoError(f"Ошибка хеширования Argon2: {exc}")
 
 
-def verify_password(password: str, pwhash: str) -> bool:
+def verify_password(password: str, pwhash: str, config: Argon2Config | None = None) -> bool:
     """
     Проверяет пароль относительно Argon2 хеша.
     """
@@ -109,7 +135,8 @@ def verify_password(password: str, pwhash: str) -> bool:
         return False
 
     try:
-        return _ph.verify(pwhash, password)
+        hasher = get_argon2_hasher(config) if config else _ph
+        return hasher.verify(pwhash, password)
     except VerifyMismatchError:
         return False
     except Exception:

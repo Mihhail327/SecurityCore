@@ -50,9 +50,13 @@ ADVANCED_PASSWORD_REGEX: Final[re.Pattern] = re.compile(
     rf"[A-Za-z\d{_escaped_chars}]{{{MIN_PASSWORD_LENGTH},{MAX_PASSWORD_LENGTH}}}$"
 )
 
-# XSS - более агрессивный поиск тегов
+# XSS - комплексный поиск тегов, событий (on*=) и схем URIs
 XSS_DANGEROUS_TAGS: Final[re.Pattern] = re.compile(
-    r"<(?:script|iframe|object|embed|applet|meta|base|svg|form|style|link)",
+    r"<(?:script|iframe|object|embed|applet|meta|base|svg|form|style|link)"
+    r"|\bon\w+\s*="
+    r"|javascript:"
+    r"|vbscript:"
+    r"|data:text/html",
     re.IGNORECASE,
 )
 

@@ -1,3 +1,4 @@
+import warnings
 from securitycore._internal.error import SecurityViolationError
 from securitycore._internal.regexes import (
     SQL_INJECTION_PATTERN,
@@ -35,10 +36,15 @@ def sanitize_sql_input(value: str) -> str:
     Она может сломать легитимные данные (например, "O'Connor").
     Лучшая практика - использовать Prepared Statements в вашей ORM.
     """
+    warnings.warn(
+        "sanitize_sql_input угасает (deprecated). Динамическая ручная санитизация SQL не гарантирует "
+        "защиту от SQL-инъекций. Используйте параметризованные запросы / ORM.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     if not isinstance(value, str):
         raise SecurityViolationError("SQL-параметр должен быть строкой")
 
-    # Смягченная очистка (вырезаем только самые опасные паттерны вроде -- или /*)
     cleaned = value.replace("--", "").replace("/*", "").replace("*/", "")
     return cleaned.strip()
 

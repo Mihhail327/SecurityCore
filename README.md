@@ -1,4 +1,3 @@
-
 ---
 
 # 🔐 SecurityCore
@@ -19,10 +18,10 @@
 
 | Модуль | Описание | Основные функции |
 | --- | --- | --- |
-| **🔑 Crypto** | Продвинутая криптография (Argon2, JWT) | `hash_password`, `verify_password`, `create_token_pair` |
-| **🛡️ Protection** | Защита от классических атак (IDS, nh3 XSS) | `sanitize_xss`, `ensure_no_sql_injection`, `SafeString` |
-| **✔️ Validation** | Строгая проверка типов и форматов | `validate_email`, `validate_ip`, `validate_url` |
-| **📜 Audit** | Протоколирование для SIEM | `audit`, `audit_json` |
+| **🔑 Crypto** | Продвинутая криптография (Argon2id, JWT, HMAC) | `hash_password`, `verify_password`, `Argon2Config`, `create_token_pair` |
+| **🛡️ Protection** | Защита от классических атак (WAF/IDS, nh3 XSS) | `sanitize_xss`, `ensure_no_xss`, `ensure_no_sql_injection`, `SafeString` |
+| **✔️ Validation** | Строгая проверка типов и форматов | `validate_email`, `validate_ip`, `validate_url`, `validate_password` |
+| **📜 Audit** | Протоколирование для SIEM с авто-усечением | `audit`, `audit_json` |
 | **🔌 Integrations** | Готовые Middleware для фреймворков | `SecurityAuditMiddleware` (FastAPI) |
 
 ---
@@ -41,7 +40,6 @@ pip install securitycore[fastapi]
 # Для разработки и контрибьютинга
 git clone https://github.com/Mihhail327/SecurityCore.git
 cd SecurityCore && poetry install
-
 ```
 
 ---
@@ -56,29 +54,44 @@ cd SecurityCore && poetry install
 from securitycore import password_analyzer
 
 res = password_analyzer("SuperSecret123!")
-print(f"📊 Стойкость: {res['strength']} ({res['bits']:.2f} bits)")
-
+print(f"📊 Стойкость: {res['strength']} ({res['brute_force_bits']:.2f} bits)")
 ```
 
-#### 🧼 Очистка ввода (XSS/SQLi)
+#### 🧼 Очистка ввода (XSS)
 
 ```python
-from securitycore import input_sanitizer
+from securitycore import input_sanitizer, sanitize_xss
 
 raw_html = "<img src=x onerror=alert(1)> Привет!"
-clean_html = input_sanitizer(raw_html)
+clean_html = sanitize_xss(raw_html)
 # Результат: &lt;img src=x onerror=alert(1)&gt; Привет!
-
 ```
 
-#### 🔑 Хеширование паролей (Argon2)
+#### 🔑 Хеширование паролей (Argon2id)
 
 ```python
-from securitycore import hash_password, verify_password
+from securitycore import hash_password, verify_password, Argon2Config
 
-# Автоматически использует надежные настройки памяти и времени
+# Безопасные настройки по умолчанию
 pwhash = hash_password("SuperSecret123!")
 is_valid = verify_password("SuperSecret123!", pwhash)
+
+# Кастомная конфигурация памяти и итераций (опционально)
+custom_config = Argon2Config(time_cost=2, memory_cost=32768, parallelism=2)
+custom_hash = hash_password("SuperSecret123!", config=custom_config)
+```
+
+#### 🎫 Генерация и проверка токенов (JWT)
+
+```python
+from securitycore import create_token_pair, verify_token
+
+# Создание пары токен + ключ
+token, key = create_token_pair({"user_id": 42}, expires_in=3600)
+
+# Валидация токена
+payload = verify_token(token, key)
+print(payload["user_id"])  # 42
 ```
 
 #### 🛡️ FastAPI Интеграция (IDS и Security Headers)
@@ -88,28 +101,29 @@ from fastapi import FastAPI
 from securitycore.integrations import SecurityAuditMiddleware
 
 app = FastAPI()
-# Автоматически логирует XSS/SQLi атаки и добавляет заголовки безопасности
+
+# Автоматически логирует XSS/SQLi атаки в query-параметрах и добавляет заголовки безопасности
 app.add_middleware(SecurityAuditMiddleware)
 ```
 
 ---
 
-## 🔄 Миграция (с v1.0 на v1.1+)
+## 🔄 Миграция и Изменения в v1.2+
 
-В новой версии мы перешли на **Argon2** и **JWT**.
+- **JWT Токены**: В `generate_token(payload, key)` параметр `key` теперь является **обязательным**. Для автоматической генерации ключа вместе с токеном используйте `create_token_pair(payload)`.
+- **Argon2Config**: Добавлена поддержка передачи кастомного конфига `Argon2Config(time_cost=..., memory_cost=...)` в `hash_password` и `verify_password`.
+- **SQL Sanitization**: Функция `sanitize_sql_input` помечена как `Deprecated`. Динамическое удаление символов из SQL-строк не гарантирует безопасность. Для выполнения запросов используйте параметризованные запросы / ORM, а для аудит-мониторинга атак — `ensure_no_sql_injection`.
+- **Безопасность аудита**: Аудит-логгеры `audit` и `audit_json` автоматически и безопасно усекают длинные записи (`[TRUNCATED]`) вместо выбрасывания необработанных исключений.
 
-**Токены:** Ранее `generate_token` возвращал кастомный HEX-формат. Теперь он использует индустриальный стандарт **JWT** (`PyJWT`).
-Если вы используете токены, вам не нужно менять код вызова `generate_token(payload, key)`, но учтите, что формат изменился на `ey...`.
-
-**Хеширование:** Для новых паролей используйте `hash_password`. Старая функция `hash_data` (PBKDF2) оставлена для обратной совместимости, но помечена как Legacy.
+---
 
 ## 🧪 Надежность и Тестирование
 
-Придерживаюсь подхода **Test-Driven Development**. Стабильность гарантирована полным покрытием `pytest`.
+Библиотека покрыта комплексным набором модульных и интеграционных тестов `pytest`.
 
 ```bash
 poetry run pytest -v
-
+poetry run ruff check
 ```
 
 ---
@@ -147,10 +161,10 @@ poetry run pytest -v
 
 | Module | Description | Core Functions |
 | --- | --- | --- |
-| **🔑 Crypto** | Advanced cryptography (Argon2, JWT) | `hash_password`, `verify_password`, `create_token_pair` |
-| **🛡️ Protection** | Classic attack prevention (IDS, nh3 XSS) | `sanitize_xss`, `ensure_no_sql_injection`, `SafeString` |
-| **✔️ Validation** | Strict type and format validation | `validate_email`, `validate_ip`, `validate_url` |
-| **📜 Audit** | SIEM-ready logging | `audit`, `audit_json` |
+| **🔑 Crypto** | Advanced cryptography (Argon2id, JWT, HMAC) | `hash_password`, `verify_password`, `Argon2Config`, `create_token_pair` |
+| **🛡️ Protection** | Classic attack prevention (WAF/IDS, nh3 XSS) | `sanitize_xss`, `ensure_no_xss`, `ensure_no_sql_injection`, `SafeString` |
+| **✔️ Validation** | Strict type and format validation | `validate_email`, `validate_ip`, `validate_url`, `validate_password` |
+| **📜 Audit** | SIEM-ready logging with auto-truncation | `audit`, `audit_json` |
 | **🔌 Integrations** | Ready-to-use framework middleware | `SecurityAuditMiddleware` (FastAPI) |
 
 ---
@@ -183,27 +197,44 @@ cd SecurityCore && poetry install
 from securitycore import password_analyzer
 
 res = password_analyzer("SuperSecret123!")
-print(f"📊 Strength: {res['strength']} ({res['bits']:.2f} bits)")
+print(f"📊 Strength: {res['strength']} ({res['brute_force_bits']:.2f} bits)")
 ```
 
-#### 🧼 Input Sanitization (XSS/SQLi)
+#### 🧼 Input Sanitization (XSS)
 
 ```python
-from securitycore import input_sanitizer
+from securitycore import input_sanitizer, sanitize_xss
 
 raw_html = "<img src=x onerror=alert(1)> Hello!"
-clean_html = input_sanitizer(raw_html)
+clean_html = sanitize_xss(raw_html)
 # Result: &lt;img src=x onerror=alert(1)&gt; Hello!
 ```
 
-#### 🔑 Password Hashing (Argon2)
+#### 🔑 Password Hashing (Argon2id)
 
 ```python
-from securitycore import hash_password, verify_password
+from securitycore import hash_password, verify_password, Argon2Config
 
-# Automatically uses secure memory and time cost settings
+# Secure defaults out of the box
 pwhash = hash_password("SuperSecret123!")
 is_valid = verify_password("SuperSecret123!", pwhash)
+
+# Custom memory and cost configuration (optional)
+custom_config = Argon2Config(time_cost=2, memory_cost=32768, parallelism=2)
+custom_hash = hash_password("SuperSecret123!", config=custom_config)
+```
+
+#### 🎫 Token Generation & Verification (JWT)
+
+```python
+from securitycore import create_token_pair, verify_token
+
+# Generate token & signing key pair
+token, key = create_token_pair({"user_id": 42}, expires_in=3600)
+
+# Verify token
+payload = verify_token(token, key)
+print(payload["user_id"])  # 42
 ```
 
 #### 🛡️ FastAPI Integration (IDS & Security Headers)
@@ -213,26 +244,29 @@ from fastapi import FastAPI
 from securitycore.integrations import SecurityAuditMiddleware
 
 app = FastAPI()
-# Automatically logs XSS/SQLi attacks and adds security headers
+
+# Automatically logs XSS/SQLi attacks in query params & sets security headers
 app.add_middleware(SecurityAuditMiddleware)
 ```
 
 ---
 
-## 🔄 Migration (from v1.0 to v1.1+)
+## 🔄 Migration & Changes in v1.2+
 
-In the new version, we migrated to **Argon2** and **JWT**.
+- **JWT Tokens**: In `generate_token(payload, key)`, the `key` parameter is now **required**. To generate a token and key pair together, use `create_token_pair(payload)`.
+- **Argon2Config**: Added support for passing custom `Argon2Config(time_cost=..., memory_cost=...)` to `hash_password` and `verify_password`.
+- **SQL Sanitization**: `sanitize_sql_input` is marked as `Deprecated`. Manual string replacement does not guarantee SQL injection protection. Use ORM / Parameterized queries for SQL operations, and `ensure_no_sql_injection` for WAF/IDS auditing.
+- **Audit Resilience**: Audit loggers `audit` and `audit_json` safely truncate oversized log entries (`[TRUNCATED]`) instead of throwing uncaught exceptions.
 
-**Tokens:** Previously, `generate_token` returned a custom HEX format. Now it uses the industry standard **JWT** (`PyJWT`). If you use tokens, you don't need to change the `generate_token(payload, key)` call code, but be aware that the format has changed to `ey...`.
-
-**Hashing:** For new passwords, use `hash_password`. The old `hash_data` (PBKDF2) function is kept for backward compatibility but marked as Legacy.
+---
 
 ## 🧪 Reliability and Testing
 
-I follow the **Test-Driven Development** approach. Stability is guaranteed by full `pytest` coverage.
+Full test suite with `pytest` and code formatting via `ruff`.
 
 ```bash
 poetry run pytest -v
+poetry run ruff check
 ```
 
 ---
@@ -248,5 +282,3 @@ The **SecurityCore** library grew out of a personal interest in information secu
 ## 📜 License
 
 Distributed under the **MIT** license. See the `LICENSE` file for details.
-
----

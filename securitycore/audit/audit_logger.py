@@ -50,7 +50,7 @@ def audit(event: str, details: Optional[Dict[str, Any]] = None) -> None:
     record = _format_audit_record(event, details)
 
     if len(record) > MAX_LOG_MESSAGE_LENGTH:
-        # Вместо падения можно просто обрезать, но в безопасности лучше знать о переполнении
-        raise AuditError(f"Запись аудита слишком длинная ({len(record)} знаков)")
+        # Обрезаем лог, чтобы не ломать поток приложения при длинном аудите
+        record = record[: MAX_LOG_MESSAGE_LENGTH - 15] + " [TRUNCATED]"
 
     _logger.info(record)
